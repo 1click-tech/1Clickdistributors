@@ -87,7 +87,6 @@ const UserDetailView = ({ close }) => {
       if (file) {
         console.log("has file uploading...");
         const ress = await handleUpload();
-        console.log("ress is", ress);
         if (ress?.success) {
           body.userImageLink = ress.downloadURL;
         } else {
