@@ -100,9 +100,10 @@ const Page = () => {
     }
 
     if (userDetails?.hierarchy) {
-      let userPanels = allUserRoles?.filter(
-        (item) => item.id == userDetails?.hierarchy
-      )?.[0]?.panels;
+      let userPanels =
+        allUserRoles?.filter((item) => item.id == userDetails?.hierarchy)?.[0]
+          ?.panels || [];
+
       setuserRoles([...commonPanels, ...userPanels]);
     }
   }, [userDetails]);

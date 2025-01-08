@@ -133,9 +133,9 @@ const index = ({
   return (
     <div className="w-full h-full">
       {loading && (
-        <div className="w-full flex flex-col items-center justify-center">
-          <img src="/loader.gif" className="h-[30px] w-auto" alt="loading" />
-          <p className="text-xl font-bold text-gray-500 mt-3">
+        <div className="w-full flex flex-col items-center justify-center mt-1">
+          <img src="/loader.gif" className="h-[25px] w-auto" alt="loading" />
+          <p className="text-sm font-bold text-gray-500 mt-1">
             Loading leads... please wait
           </p>
         </div>
@@ -211,7 +211,7 @@ const RenderTable = ({ leads, selectedRows, setSelectedRows, searchValue }) => {
     // "looking_for",
     "your_mobile_number",
     "email",
-    "disposition",
+    // "disposition",
     "city",
     "whats_is_your_requirement_?_write_in_brief",
   ];

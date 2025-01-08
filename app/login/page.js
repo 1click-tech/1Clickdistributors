@@ -13,6 +13,7 @@ import { useDispatch } from "react-redux";
 import { login } from "@/store/auth/authReducer";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { sendUsersToPages } from "@/lib/commonFunctions";
 
 const page = () => {
   const [email, setEmail] = useState("");
@@ -97,7 +98,7 @@ const page = () => {
           // Remove credentials from localStorage if not remembered
           localStorage.removeItem("rememberMeCredentials");
         }
-        router.replace("/board");
+        sendUsersToPages(data.userType, router);
       } else {
         return toast.error(data.message);
       }

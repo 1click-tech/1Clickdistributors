@@ -10,7 +10,7 @@ const EdituserForm = ({ close, refetchUsers, currentUser, allUsers }) => {
     name: "",
     password: "",
     phone: "",
-    updatedEmail:"",
+    updatedEmail: "",
     department: "",
     hierarchy: "",
     employeeId: "",
@@ -20,8 +20,6 @@ const EdituserForm = ({ close, refetchUsers, currentUser, allUsers }) => {
   const [loading, setLoading] = useState(false);
   // const [allLeaders, setAllLeaders] = useState(null);
   const [seniorPosition, setSeniorPosition] = useState(null);
-
-  console.log("data is", data);
 
   useEffect(() => {
     setData((pre) => ({ ...pre, senior: null }));
@@ -237,9 +235,9 @@ const EdituserForm = ({ close, refetchUsers, currentUser, allUsers }) => {
         </select>
       </div>
 
-      {seniorPosition && (
+      {Array.isArray(seniorPosition) && seniorPosition.length > 0 && (
         <div className="flex flex-col w-full gap-1">
-          <span className={`${spanStyle}`}>Select senior {seniorPosition}</span>
+          <span className={`${spanStyle}`}>Select senior</span>
           <select
             className={`border p-1 rounded-md border-gray-400`}
             name="senior"
@@ -253,7 +251,7 @@ const EdituserForm = ({ close, refetchUsers, currentUser, allUsers }) => {
               ?.filter(
                 (item) =>
                   item.department == data.department &&
-                  item.hierarchy == seniorPosition
+                  seniorPosition.includes(item.hierarchy)
               )
               .map((item) => {
                 return (
@@ -262,7 +260,7 @@ const EdituserForm = ({ close, refetchUsers, currentUser, allUsers }) => {
                     value={item.id}
                     selected={data.senior == item.id}
                   >
-                    {item.name}
+                    {item.name} {`(${item.hierarchy})`}
                   </option>
                 );
               })}

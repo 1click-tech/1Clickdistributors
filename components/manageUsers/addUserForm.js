@@ -9,10 +9,15 @@ export const getSeniorRole = (department, currentRole) => {
 
   if (roleData && roleData.hierarchy) {
     const hierarchy = roleData.hierarchy;
-    const currentIndex = hierarchy.indexOf(currentRole);
-
-    if (currentIndex > 0) {
-      return hierarchy[currentIndex - 1];
+    let indexOfHierarchy = hierarchy?.findIndex((item) => item == currentRole);
+    if (indexOfHierarchy != -1) {
+      let upperRoles = hierarchy.slice(0, indexOfHierarchy);
+      if (upperRoles.length) {
+        return upperRoles;
+      }
+      return null;
+    } else {
+      return null;
     }
   }
   return null;
@@ -58,8 +63,6 @@ const AdduserForm = ({ close, refetchUsers, allUsers }) => {
     let value = event.target.value;
     setData((pre) => ({ ...pre, [name]: value }));
   };
-
-  console.log(" data is", data);
 
   // useEffect(() => {
   //   let leaders = allUsers.filter((item) => item?.hierarchy == "teamLead");
@@ -238,9 +241,10 @@ const AdduserForm = ({ close, refetchUsers, allUsers }) => {
             ))}
         </select>
       </div>
-      {seniorPosition && (
+
+      {Array.isArray(seniorPosition) && seniorPosition.length > 0 && (
         <div className="flex flex-col w-full gap-1">
-          <span className={`${spanStyle}`}>Select senior {seniorPosition}</span>
+          <span className={`${spanStyle}`}>Select senior</span>
           <select
             className={`border p-1 rounded-md border-gray-400`}
             name="senior"
@@ -254,7 +258,7 @@ const AdduserForm = ({ close, refetchUsers, allUsers }) => {
               ?.filter(
                 (item) =>
                   item.department == data.department &&
-                  item.hierarchy == seniorPosition
+                  seniorPosition.includes(item.hierarchy)
               )
               .map((item) => {
                 return (
@@ -263,7 +267,7 @@ const AdduserForm = ({ close, refetchUsers, allUsers }) => {
                     value={item.id}
                     selected={data.senior == item.id}
                   >
-                    {item.name}
+                    {item.name} {`(${item.hierarchy})`}
                   </option>
                 );
               })}

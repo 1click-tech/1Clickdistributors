@@ -16,9 +16,16 @@ const CustomizedLayout = ({ children }) => {
   }, []);
 
   if (data.authenticationLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full flex flex-col items-center mt-3 gap-1">
+        <img src="/loader.gif" className="h-12 w-12" />
+        <p className="text-xl font-semibold text-gray-500">
+          Authenticating user please wait
+        </p>
+      </div>
+    );
   }
-
+  
   return <div>{children}</div>;
 };
 
