@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { dispositions, subDispositions } from "@/lib/data/commonData";
-import { MdEdit } from "react-icons/md";
-import moment from "moment";
 import { toast } from "react-toastify";
 import { convertTimeStamp } from "@/lib/commonFunctions";
 import { useQuery } from "@tanstack/react-query";
@@ -77,21 +75,6 @@ const CallDetails = ({ data: leadDetails, refetchLead }) => {
 
   const updateLeadStage = async () => {
     try {
-      if (!fields.remarks) {
-        toast.error("Please Enter Remarks");
-        return;
-      }
-
-      if (
-        fields.disposition !== "Not Interested" &&
-        fields.disposition !== "Become Distributor" &&
-        fields.disposition !== "No Contactable" &&
-        !fields.followUpDate
-      ) {
-        toast.error("Please select follow up date");
-        return;
-      }
-
       const body = {
         leadId: leadDetails?.leadData?.leadId,
         followUpDate: fields.followUpDate,
