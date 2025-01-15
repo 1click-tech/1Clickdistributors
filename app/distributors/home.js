@@ -148,9 +148,10 @@ const Home = () => {
           onClick={() => setExpanded(!expanded)}
         />
 
-        <p className="text-2xl">
-          aoishdf ahsf uih asuidfhu asdfg iuasgdf uig asuidgf uiasgdf
-        </p>
+        <div className="w-full h-full">
+          <h1 className="text-gray-700 text-2xl text-center">Distributor Panel</h1>
+          {selectedPanel == "profile"}
+        </div>
       </div>
     </div>
   );
