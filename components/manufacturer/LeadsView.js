@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useContext, useEffect, useState } from "react";
 import { MdSearch } from "react-icons/md";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaFirstAid } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import manufacturerContext from "@/lib/context/manufacturerContext";
 import { MdOutlineMailOutline } from "react-icons/md";
@@ -9,6 +9,9 @@ import { CiLocationOn } from "react-icons/ci";
 import LeadDetailView from "./LeadDetailView";
 import { vibrantColors } from "@/lib/data/commonData";
 import { toast } from "react-toastify";
+import AnimatedModal from "../utills/AnimatedModal";
+import useModal from "../hooks/useModal";
+import { IoMdAdd } from "react-icons/io";
 
 const LeadsView = () => {
   const [loading, setLoading] = useState(false);
@@ -134,6 +137,9 @@ export default LeadsView;
 const ListView = ({ leads }) => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const { selectedLead, setSelectedLead } = useContext(manufacturerContext);
+  const [showFilters, setShowFilters] = useState(false);
+  const { open, close, modalOpen } = useModal();
+
   let filters = [
     {
       label: "All",
@@ -155,6 +161,12 @@ const ListView = ({ leads }) => {
 
   return (
     <div className="w-full h-full flex flex-col">
+      <AnimatedModal open={open} close={close} modalOpen={modalOpen}>
+        <div className="p-3 bg-white">
+          <Filters />
+        </div>
+      </AnimatedModal>
+
       <div className="w-full flex flex-col gap-1">
         <h1 className="text-lg font-semibold text-gray-700">
           Total Leads ({leads.length})
@@ -171,7 +183,8 @@ const ListView = ({ leads }) => {
           <FaFilter
             data-tooltip-id="filtersBtn"
             data-tooltip-content="Filters"
-            className="text-colorPrimary text-[20px]"
+            className="text-colorPrimary text-[20px] outline-none cursor-pointer"
+            onClick={open}
           />
 
           <Tooltip id="filtersBtn" />
@@ -241,6 +254,53 @@ const ListView = ({ leads }) => {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+};
+
+const Filters = ({}) => {
+  const [expanded, setExpanded] = useState(["locations"]);
+
+  const locations = ["Banglore", "Delhi", "Chennai", "Rishikesh", "Dehradun"];
+
+  const onClickFilter = () => {
+    if (expanded?.includes("locations")) {
+      setExpanded([]);
+    } else {
+      setExpanded(["locations"]);
+    }
+  };
+
+  return (
+    <div className="w-[20vw] min-h-[50vh] rounded-md">
+      <h1 className="text-gray-500 text-lg font-semibold">Filters</h1>
+
+      <div className="w-full p-2 shadow-large rounded-md transition-all mt-1">
+        <div className="flex justify-between items-center">
+          <span className="text-base text-gray-600">Location</span>
+          <IoMdAdd className="text-xl cursor-pointer" onClick={onClickFilter} />
+        </div>
+
+        {expanded?.includes("locations") && (
+          <div className="mt-2 flex flex-col gap-1">
+            {locations?.map((item) => {
+              return (
+                <div className="flex gap-3 items-center">
+                  <input type="checkbox" className="h-4 w-4 p-1 rounded" />
+                  <span className="text-sm text-gray-500">{item}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="w-full p-2 shadow-large rounded-md transition-all mt-2">
+        <div className="flex justify-between items-center">
+          <span className="text-base text-gray-600">Source</span>
+          <IoMdAdd className="text-xl cursor-pointer" onClick={onClickFilter} />
+        </div>
       </div>
     </div>
   );

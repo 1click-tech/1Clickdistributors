@@ -1,10 +1,10 @@
 import manufacturerContext from "@/lib/context/manufacturerContext";
 import panelContext from "@/lib/context/panelContext";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import CustomInput from "../uiCompoents/CustomInput";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
-import { MdEmail, MdKeyboardArrowUp } from "react-icons/md";
+import { MdEmail, MdKeyboardArrowUp, MdOutlinePassword } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa6";
 import { FaCamera } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
@@ -20,6 +20,37 @@ const Profile = () => {
   const { userDetails } = useContext(manufacturerContext);
   const [isEditing, setIsEditing] = useState(false);
   const [showSections, setShowSections] = useState([]);
+
+  const [data, setData] = useState({
+    name: "",
+    phone: null,
+    email: null,
+    password: "",
+  });
+
+  useEffect(() => {
+    if (userDetails) {
+      setData({
+        name: userDetails?.name,
+        phone: userDetails?.phone,
+        email: userDetails?.email,
+        password: userDetails.password,
+      });
+    }
+  }, [userDetails]);
+
+  const saveChanges = async () => {
+    try {
+      console.log("data is", data);
+      setIsEditing(false);
+    } catch (error) {
+      console.log("error in savechanges", error.message);
+    }
+  };
+
+  const onChangeValue = (value, fieldName) => {
+    setData((pre) => ({ ...pre, [fieldName]: value }));
+  };
 
   return (
     <div className="w-full h-full p-2 flex flex-col items-center gap-2">
@@ -56,32 +87,40 @@ const Profile = () => {
               <div className={`${rowItemStyle}`}>
                 <CustomInput
                   label={"Your Name"}
-                  value={userDetails?.name}
+                  value={data?.name}
+                  onChangeValue={(value) => onChangeValue(value, "name")}
+                  disabled={!isEditing}
                   icon={<FaUser className={`${iconStyle}`} />}
                 />
               </div>
+
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"Your Email"}
-                  value={userDetails?.email}
-                  icon={<MdEmail className={`${iconStyle}`} />}
+                  label={"Your Phone"}
+                  value={data?.phone}
+                  onChangeValue={(value) => onChangeValue(value, "phone")}
+                  type="number"
+                  disabled={!isEditing}
+                  icon={<FaPhoneAlt className={`${iconStyle}`} />}
                 />
               </div>
             </div>
             <div className={`${rowStyle}`}>
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"Your Phone"}
-                  value={userDetails?.phone}
-                  type="number"
-                  icon={<FaPhoneAlt className={`${iconStyle}`} />}
+                  label={"Your Email"}
+                  value={userDetails?.email}
+                  disabled={true}
+                  icon={<MdEmail className={`${iconStyle}`} />}
                 />
               </div>
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"Your Department"}
-                  value={userDetails?.department}
-                  icon={<FaBuilding className={`${iconStyle}`} />}
+                  label={"Your Password"}
+                  value={data?.password}
+                  onChangeValue={(value) => onChangeValue(value, "password")}
+                  disabled={!isEditing}
+                  icon={<MdOutlinePassword className={`${iconStyle}`} />}
                 />
               </div>
             </div>
@@ -89,7 +128,7 @@ const Profile = () => {
             <div className={`w-full flex justify-end mt-6`}>
               {isEditing ? (
                 <button
-                  onClick={() => setIsEditing(false)}
+                  onClick={saveChanges}
                   className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
                 >
                   <CiSaveUp2 />

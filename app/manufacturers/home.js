@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
 import { IoMdClose } from "react-icons/io";
 import LeadsView from "@/components/manufacturer/LeadsView";
+import { AiFillProduct } from "react-icons/ai";
 
 const Home = () => {
   const [containerHeight, setContainerHeight] = useState(null);
@@ -54,12 +55,12 @@ const Home = () => {
       value: "profile",
     },
     {
-      name: "Dashboard",
-      value: "dashboard",
-    },
-    {
       name: "Leads & Enquiries",
       value: "leads&Enquiries",
+    },
+    {
+      name: "My Products",
+      value: "my_products",
     },
     {
       name: "My allocations",
@@ -89,8 +90,8 @@ const Home = () => {
     switch (panel) {
       case "profile":
         return <CgProfile className={`${iconStyle}`} />;
-      case "dashboard":
-        return <RxDashboard className={`${iconStyle}`} />;
+      case "my_products":
+        return <AiFillProduct className={`${iconStyle}`} />;
       case "my_allocations":
         return <GoDatabase className={`${iconStyle}`} />;
       case "leads&Enquiries":

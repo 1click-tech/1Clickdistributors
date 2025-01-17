@@ -35,7 +35,7 @@ const AnimatedModal = ({ modalOpen, close, open, onClose, children }) => {
             initial={{ y: "-100vh" }}
             animate={{ y: 0 }}
             exit={{ y: "100vh" }}
-            className="bg-white  rounded-lg shadow-lg z-50 overflow-y-scroll scrollbar-thin"
+            className="bg-white  rounded-lg shadow-lg z-50 overflow-hidden scrollbar-thin"
           >
             {children}
           </motion.div>
