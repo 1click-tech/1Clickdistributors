@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { dispositions, subDispositions } from "@/lib/data/commonData";
 import { toast } from "react-toastify";
-import { convertTimeStamp } from "@/lib/commonFunctions";
+import { convertToTimeStamp } from "@/lib/commonFunctions";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import { authSelector } from "@/store/auth/selector";
@@ -250,7 +250,7 @@ const CallDetails = ({ data: leadDetails, refetchLead }) => {
           <div className="text-left">
             <p className="text-gray-700">
               {leadDetails?.leadData?.lastCallBackDate
-                ? convertTimeStamp(leadDetails?.leadData?.lastCallBackDate)
+                ? convertToTimeStamp(leadDetails?.leadData?.lastCallBackDate)
                 : "NA"}
             </p>
           </div>
@@ -267,7 +267,7 @@ const CallDetails = ({ data: leadDetails, refetchLead }) => {
           <div className="text-left">
             <p className="text-gray-700">
               {leadDetails?.leadData?.followUpDate
-                ? convertTimeStamp(leadDetails?.leadData?.followUpDate)
+                ? convertToTimeStamp(leadDetails?.leadData?.followUpDate)
                 : "NA"}
             </p>
           </div>

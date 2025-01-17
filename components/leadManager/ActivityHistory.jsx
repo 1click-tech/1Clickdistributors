@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import Table from "../utills/Table";
-import { convertTimeStamp } from "@/lib/commonFunctions";
+import { convertToTimeStamp } from "@/lib/commonFunctions";
 
 const ActivityHistory = ({ data }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -14,9 +14,11 @@ const ActivityHistory = ({ data }) => {
   const updatedData = data?.historyData?.map((item) => {
     return {
       ...item,
-      followUpDate: convertTimeStamp(item?.followUpDate),
-      updatedAt: convertTimeStamp(item?.updatedAt),
-      salesMemberName: data?.leadData?.salesMemberName || null,
+      followUpDate: item?.followUpDate
+        ? convertToTimeStamp(item?.followUpDate)
+        : null,
+      updatedAt: item?.updatedAt ? convertToTimeStamp(item?.updatedAt) : "",
+      salesMemberName: data?.leadData?.salesMemberName || "",
     };
   });
 
