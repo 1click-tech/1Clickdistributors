@@ -58,7 +58,7 @@ const LeadDetailView = ({
         <div className="h-auto bg-gradient-to-r from-[#cc6f11] to-[#cd4030] p-1 pt-3 flex flex-col items-center">
           <div className="flex justify-between md:justify-end px-1 border-b border-orange-800/30 pb-2 w-[98%]">
             <MdArrowBack
-              className="text-3xl md:hidden text-white"
+              className="text-3xl text-white"
               onClick={() => setSelectedLead(null)}
             />
 

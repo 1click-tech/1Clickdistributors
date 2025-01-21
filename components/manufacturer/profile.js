@@ -4,13 +4,25 @@ import React, { useContext, useEffect, useState } from "react";
 import CustomInput from "../uiCompoents/CustomInput";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
-import { MdEmail, MdKeyboardArrowUp, MdOutlinePassword } from "react-icons/md";
-import { FaBuilding } from "react-icons/fa6";
+import {
+  MdEmail,
+  MdKeyboardArrowUp,
+  MdOutlineCurrencyRupee,
+  MdOutlinePassword,
+  MdOutlinePersonPinCircle,
+} from "react-icons/md";
+import {
+  FaAddressCard,
+  FaBuilding,
+  FaCity,
+  FaNetworkWired,
+} from "react-icons/fa6";
 import { FaCamera } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
 import { CiLocationOn } from "react-icons/ci";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import CustomSelector from "../uiCompoents/CustomSelector";
 
 const rowStyle = "w-full flex justify-between py-1 flex-col md:flex-row gap-4";
 const rowItemStyle = "w-full md:w-[46%]";
@@ -96,12 +108,10 @@ const Profile = () => {
 
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"Your Phone"}
-                  value={data?.phone}
-                  onChangeValue={(value) => onChangeValue(value, "phone")}
-                  type="number"
-                  disabled={!isEditing}
-                  icon={<FaPhoneAlt className={`${iconStyle}`} />}
+                  label={"Designation"}
+                  value={data?.designation}
+                  disabled={true}
+                  icon={<FaNetworkWired className={`${iconStyle}`} />}
                 />
               </div>
             </div>
@@ -116,11 +126,32 @@ const Profile = () => {
               </div>
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"Your Password"}
-                  value={data?.password}
-                  onChangeValue={(value) => onChangeValue(value, "password")}
+                  label={"Alt Email"}
+                  onChangeValue={(value) => onChangeValue(value, "altEmail")}
+                  value={userDetails?.altEmail}
                   disabled={!isEditing}
-                  icon={<MdOutlinePassword className={`${iconStyle}`} />}
+                  icon={<MdEmail className={`${iconStyle}`} />}
+                />
+              </div>
+            </div>
+            <div className={`${rowStyle}`}>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"Your Phone"}
+                  value={data?.phone}
+                  onChangeValue={(value) => onChangeValue(value, "phone")}
+                  type="number"
+                  disabled={!isEditing}
+                  icon={<FaPhoneAlt className={`${iconStyle}`} />}
+                />
+              </div>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"City"}
+                  value={userDetails?.city}
+                  onChangeValue={(value) => onChangeValue(value, "city")}
+                  icon={<FaCity className={`${iconStyle}`} />}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -140,7 +171,7 @@ const Profile = () => {
                   className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-sm bg-colorPrimary text-white hover:bg-colorPrimary/80 w-fit"
                 >
                   <MdOutlineEdit />
-                  Save profile changes
+                  Edit details
                 </button>
               )}
             </div>
@@ -187,67 +218,153 @@ export default Profile;
 const BusinessProfile = () => {
   const { userDetails } = useContext(manufacturerContext);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSections, setShowSections] = useState([]);
+
+  const [data, setData] = useState({
+    name: "",
+    phone: null,
+    email: null,
+    password: "",
+  });
+
+  useEffect(() => {
+    if (userDetails) {
+      setData({
+        ...userDetails,
+        name: userDetails?.name,
+        phone: userDetails?.phone,
+        email: userDetails?.email,
+        password: userDetails.password,
+      });
+    }
+  }, [userDetails]);
+
+  const saveChanges = async () => {
+    try {
+      console.log("data is", data);
+      setIsEditing(false);
+    } catch (error) {
+      console.log("error in savechanges", error.message);
+    }
+  };
+
+  const onChangeValue = (value, fieldName) => {
+    setData((pre) => ({ ...pre, [fieldName]: value }));
+  };
+
+  const companyTypes = [
+    { label: "Small", value: "Small" },
+    { label: "Medium", value: "Medium" },
+    { label: "Large", value: "Large" },
+  ];
+
+  const values = [
+    { label: "Thousands", value: "thousand" },
+    { label: "Lakhs", value: "lakh" },
+    { label: "Crores", value: "crore" },
+  ];
 
   return (
-    <>
-      <div className="p-3 w-full bg-white rounded-md mt-1">
-        {/* business Details here */}
-        <div className="w-full flex flex-col gap-4 mt-7">
-          <div className={`${rowStyle}`}>
-            <div className={`${rowItemStyle}`}>
-              <CustomInput
-                label={"Company Name"}
-                value={userDetails?.name}
-                icon={<FaUser className={`${iconStyle}`} />}
-              />
-            </div>
-            <div className={`${rowItemStyle}`}>
-              <CustomInput
-                label={"GST number"}
-                value={userDetails?.email}
-                icon={<MdEmail className={`${iconStyle}`} />}
-              />
-            </div>
-          </div>
-          <div className={`${rowStyle}`}>
-            <div className={`${rowItemStyle}`}>
-              <CustomInput
-                label={"Contact number"}
-                value={userDetails?.phone}
-                type="number"
-                icon={<FaPhoneAlt className={`${iconStyle}`} />}
-              />
-            </div>
-            <div className={`${rowItemStyle}`}>
-              <CustomInput
-                label={"Ownership Type"}
-                value={userDetails?.department}
-                icon={<FaBuilding className={`${iconStyle}`} />}
-              />
-            </div>
-          </div>
+    <div className="w-full h-full flex flex-col items-center">
+      <div className="w-full">
+        <div className="p-3 w-full bg-white rounded-md">
+          {/* Profile Details here */}
+          <div className="w-full flex flex-col gap-4 mt-7">
+            <div className={`${rowStyle}`}>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"Company Name"}
+                  value={data?.companyName}
+                  onChangeValue={(value) => onChangeValue(value, "companyName")}
+                  disabled={!isEditing}
+                  icon={<FaBuilding className={`${iconStyle}`} />}
+                />
+              </div>
 
-          <div className={`w-full flex justify-end mt-6`}>
-            {isEditing ? (
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
-              >
-                <CiSaveUp2 />
-                Save changes
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-sm bg-colorPrimary text-white hover:bg-colorPrimary/80 w-fit"
-              >
-                <MdOutlineEdit />
-                Save profile changes
-              </button>
-            )}
+              <div className={`${rowItemStyle}`}>
+                <CustomSelector
+                  label={"Company type"}
+                  options={companyTypes}
+                  value={data?.designation}
+                  icon={<FaNetworkWired className={`${iconStyle}`} />}
+                />
+              </div>
+            </div>
+            <div className={`${rowStyle}`}>
+              <div className={`${rowItemStyle} flex items-center justify-between`}>
+                <div className="w-[55%]">
+                  <CustomInput
+                    label={"Turnover"}
+                    value={data?.phone}
+                    onChangeValue={(value) => onChangeValue(value, "phone")}
+                    type="number"
+                    disabled={!isEditing}
+                    icon={<MdOutlineCurrencyRupee className={`${iconStyle}`} />}
+                  />
+                </div>
+                <div className="w-[42%]">
+                  <CustomSelector
+                    // label={""}
+                    options={values}
+                    value={data?.designation}
+                    icon={<FaNetworkWired className={`${iconStyle}`} />}
+                  />
+                </div>
+              </div>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"Address"}
+                  onChangeValue={(value) => onChangeValue(value, "altEmail")}
+                  value={userDetails?.altEmail}
+                  disabled={!isEditing}
+                  icon={<FaAddressCard className={`${iconStyle}`} />}
+                />
+              </div>
+            </div>
+            <div className={`${rowStyle}`}>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"Pincode"}
+                  value={data?.phone}
+                  onChangeValue={(value) => onChangeValue(value, "phone")}
+                  type="number"
+                  disabled={!isEditing}
+                  icon={<MdOutlinePersonPinCircle className={`${iconStyle}`} />}
+                />
+              </div>
+              <div className={`${rowItemStyle}`}>
+                <CustomInput
+                  label={"City"}
+                  value={userDetails?.city}
+                  onChangeValue={(value) => onChangeValue(value, "city")}
+                  icon={<FaCity className={`${iconStyle}`} />}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <div className={`w-full flex justify-end mt-6`}>
+              {isEditing ? (
+                <button
+                  onClick={saveChanges}
+                  className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
+                >
+                  <CiSaveUp2 />
+                  Save changes
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-sm bg-colorPrimary text-white hover:bg-colorPrimary/80 w-fit"
+                >
+                  <MdOutlineEdit />
+                  Edit details
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useContext, useEffect, useState } from "react";
-import { MdSearch } from "react-icons/md";
+import { MdFilter1, MdSearch } from "react-icons/md";
 import { FaFilter, FaFirstAid } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import manufacturerContext from "@/lib/context/manufacturerContext";
@@ -98,27 +98,24 @@ const LeadsView = () => {
   };
 
   return (
-    <div className=" w-full h-full p-2 flex justify-center lg:pt-8">
+    <div className="w-full h-full p-2 flex justify-between lg:pt-8">
       <div
         className={`${
           isSmallDevice ? (selectedLead ? "hidden" : "flex w-full") : ""
-        } w-full md:w-[42%] xl:w-[35%] h-full flex flex-col gap-2 items-center`}
+        } w-full ${
+          !selectedLead ? "w-full" : "md:w-[42%] xl:w-[35%]"
+        }  h-full flex flex-col gap-2 items-center`}
       >
         {loading && <img src="/loader.gif" className="h-8 w-8" />}
-
-        {Array.isArray(leads) ? (
-          leads.length ? (
-            <ListView leads={leads} />
-          ) : (
-            <h1>No leads found</h1>
-          )
-        ) : null}
+        <ListView leads={leads || []} setLeads={setLeads} originalData={data} />
       </div>
 
       <div
         className={`${
           isSmallDevice ? (selectedLead ? "w-full" : "hidden") : ""
-        }  md:w-[58%] xl:w-[60%] h-full sticky top-0`}
+        }  ${
+          selectedLead ? "md:w-[58%] xl:w-[63%]" : "w-0"
+        }  h-full sticky top-0`}
       >
         {selectedLead && (
           <LeadDetailView
@@ -134,11 +131,12 @@ const LeadsView = () => {
 
 export default LeadsView;
 
-const ListView = ({ leads }) => {
+const ListView = ({ leads, setLeads, originalData }) => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const { selectedLead, setSelectedLead } = useContext(manufacturerContext);
   const [showFilters, setShowFilters] = useState(false);
   const { open, close, modalOpen } = useModal();
+  const [appliedFilters, setAppliedFilters] = useState({});
 
   let filters = [
     {
@@ -159,11 +157,63 @@ const ListView = ({ leads }) => {
     },
   ];
 
+  const filterLeads = () => {
+    try {
+      let keysToSearch = ["full_name", "phone_number", "leadId", "city"];
+
+      // Start with the original data and filter it based on multiple conditions
+      let filtered = originalData?.filter((lead, index) => {
+        let searchTextPass = true; // Default to true to allow multiple conditions
+        let cityCheckPass = true; // Default to true to allow multiple conditions
+
+        // Condition 1: Match `searchText`
+        if (appliedFilters?.searchText && appliedFilters?.searchText !== "") {
+          searchTextPass = keysToSearch.some((key) =>
+            lead?.[key]
+              ?.toString()
+              ?.toLowerCase()
+              ?.includes(appliedFilters.searchText.toLowerCase())
+          );
+        }
+
+        // Condition 1: Match `City`
+
+        if (appliedFilters?.city?.length) {
+          console.log(
+            "appliedFilters?.city?.includes(lead.city)",
+            appliedFilters?.city?.includes(lead.city)
+          );
+          cityCheckPass = appliedFilters?.city?.includes(lead.city);
+        }
+
+        let final = searchTextPass && cityCheckPass;
+        console.log("leadid", lead.leadId, "final is", final);
+
+        // Return true only if all conditions pass
+        return final || false;
+      });
+      setLeads(filtered);
+    } catch (error) {
+      console.error("Error while filtering leads:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (Object.keys(appliedFilters).length) {
+      filterLeads();
+    }
+  }, [appliedFilters]);
+
   return (
     <div className="w-full h-full flex flex-col">
       <AnimatedModal open={open} close={close} modalOpen={modalOpen}>
         <div className="p-3 bg-white">
-          <Filters />
+          <Filters
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            originalData={originalData}
+            close={close}
+          />
         </div>
       </AnimatedModal>
 
@@ -174,6 +224,13 @@ const ListView = ({ leads }) => {
         <div className="w-full flex items-center gap-3">
           <div className="w-[220px] border flex items-center px-1 justify-between border-orange-400 rounded overflow-hidden h-auto">
             <input
+              value={appliedFilters?.searchText}
+              onChange={(e) =>
+                setAppliedFilters((pre) => ({
+                  ...pre,
+                  searchText: e.target.value,
+                }))
+              }
               className="border-none outline-none text-sm bg-transparent text-gray-500 w-[80%] p-1"
               placeholder="Enter to search..."
             />
@@ -259,48 +316,151 @@ const ListView = ({ leads }) => {
   );
 };
 
-const Filters = ({}) => {
+const Filters = ({
+  appliedFilters,
+  setAppliedFilters,
+  originalData,
+  close,
+}) => {
   const [expanded, setExpanded] = useState(["locations"]);
+  const [filtersCopy, setFiltersCopy] = useState({});
 
-  const locations = ["Banglore", "Delhi", "Chennai", "Rishikesh", "Dehradun"];
+  const [content, setContent] = useState({});
 
-  const onClickFilter = () => {
-    if (expanded?.includes("locations")) {
-      setExpanded([]);
+  useEffect(() => {
+    if (appliedFilters) {
+      setFiltersCopy(appliedFilters);
+    }
+  }, [appliedFilters]);
+
+  useEffect(() => {
+    if (originalData) {
+      let cities = {};
+      let sources = {};
+      originalData?.forEach((lead) => {
+        cities[lead.city] = true;
+        sources[lead.source] = true;
+      });
+
+      cities = Object.keys(cities || {})?.filter((item) => item && item != "");
+      sources = Object.keys(sources || {})?.filter(
+        (item) => item && item != ""
+      );
+
+      setContent({
+        cities,
+        sources,
+      });
+    }
+  }, [originalData]);
+
+  const onClickFilter = (filterGroup) => {
+    setExpanded([filterGroup]);
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters(filtersCopy);
+    close();
+  };
+
+  const onChangeCity = (e) => {
+    if (!filtersCopy?.city?.includes(e.target.value)) {
+      setFiltersCopy((pre) => ({
+        ...pre,
+        city: pre.city ? [...pre.city, e.target.value] : [e.target.value],
+      }));
     } else {
-      setExpanded(["locations"]);
+      setFiltersCopy((pre) => ({
+        ...pre,
+        city: pre?.city?.filter((item) => item != e.target.value),
+      }));
+    }
+  };
+
+  const onChangeSource = (e) => {
+    if (!filtersCopy?.source?.includes(e.target.value)) {
+      setFiltersCopy((pre) => ({
+        ...pre,
+        source: pre.source ? [...pre.source, e.target.value] : [e.target.value],
+      }));
+    } else {
+      setFiltersCopy((pre) => ({
+        ...pre,
+        source: pre?.source?.filter((item) => item != e.target.value),
+      }));
     }
   };
 
   return (
-    <div className="w-[20vw] min-h-[50vh] rounded-md">
-      <h1 className="text-gray-500 text-lg font-semibold">Filters</h1>
+    <div className="w-[85vw] sm:w-[40vw] lg:w-[20vw] h-[60vh] rounded-md relative">
+      <div className="h-[95%] w-full overflow-auto">
+        <h1 className="text-gray-500 text-lg font-semibold">Filters</h1>
+        <div className="w-full p-2 shadow-md rounded-md transition-all mt-1">
+          <div className="flex justify-between items-center">
+            <span className="text-base text-gray-600">Location</span>
+            <IoMdAdd
+              className="text-xl cursor-pointer"
+              onClick={() => onClickFilter("locations")}
+            />
+          </div>
 
-      <div className="w-full p-2 shadow-large rounded-md transition-all mt-1">
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-600">Location</span>
-          <IoMdAdd className="text-xl cursor-pointer" onClick={onClickFilter} />
+          {expanded?.includes("locations") && (
+            <div className="mt-2 flex flex-col gap-1">
+              {content?.cities?.map((item) => {
+                return (
+                  <div className="flex gap-3 items-center">
+                    <input
+                      onChange={onChangeCity}
+                      value={item}
+                      checked={filtersCopy?.city?.includes(item)}
+                      type="checkbox"
+                      className="h-4 w-4 p-1 rounded"
+                    />
+                    <span className="text-sm text-gray-500">{item}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {expanded?.includes("locations") && (
-          <div className="mt-2 flex flex-col gap-1">
-            {locations?.map((item) => {
-              return (
-                <div className="flex gap-3 items-center">
-                  <input type="checkbox" className="h-4 w-4 p-1 rounded" />
-                  <span className="text-sm text-gray-500">{item}</span>
-                </div>
-              );
-            })}
+        <div className="w-full p-2 shadow-md rounded-md transition-all mt-2">
+          <div className="flex justify-between items-center">
+            <span className="text-base text-gray-600">Source</span>
+            <IoMdAdd
+              className="text-xl cursor-pointer"
+              onClick={() => onClickFilter("source")}
+            />
           </div>
-        )}
+
+          {expanded?.includes("source") && (
+            <div className="mt-2 flex flex-col gap-1">
+              {content?.sources?.map((item) => {
+                return (
+                  <div className="flex gap-3 items-center">
+                    <input
+                      onChange={onChangeSource}
+                      value={item}
+                      checked={filtersCopy?.source?.includes(item)}
+                      type="checkbox"
+                      className="h-4 w-4 p-1 rounded"
+                    />
+                    <span className="text-sm text-gray-500">{item}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="w-full p-2 shadow-large rounded-md transition-all mt-2">
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-600">Source</span>
-          <IoMdAdd className="text-xl cursor-pointer" onClick={onClickFilter} />
-        </div>
+      <div className="flex justify-end gap-2 items-center absolute bottom-0 right-0">
+        <button
+          onClick={applyFilters}
+          className="text-blue-500 font-semibold hover:underline"
+        >
+          Apply
+        </button>
       </div>
     </div>
   );

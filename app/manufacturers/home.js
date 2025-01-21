@@ -16,6 +16,8 @@ import Header from "./Header";
 import { IoMdClose } from "react-icons/io";
 import LeadsView from "@/components/manufacturer/LeadsView";
 import { AiFillProduct } from "react-icons/ai";
+import ProductsPage from "@/components/manufacturer/ProductsPage";
+import { MdArrowForward } from "react-icons/md";
 
 const Home = () => {
   const [containerHeight, setContainerHeight] = useState(null);
@@ -32,7 +34,7 @@ const Home = () => {
 
   useEffect(() => {
     const check = () => {
-      let h = window.innerHeight - 60;
+      let h = window.innerHeight - 50;
       setMainPanelHeight(h);
       if (window.innerWidth < 1025) {
         setShowSidebar(false);
@@ -62,10 +64,10 @@ const Home = () => {
       name: "My Products",
       value: "my_products",
     },
-    {
-      name: "My allocations",
-      value: "my_allocations",
-    },
+    // {
+    //   name: "My allocations",
+    //   value: "my_allocations",
+    // },
     {
       name: "Deals",
       value: "deals",
@@ -164,15 +166,17 @@ const Home = () => {
 
             <div
               style={{ height: mainPanelHeight }}
-              className="w-full xl:w-[95%] flex overflow-auto "
+              className="w-full flex overflow-auto"
             >
               <div
-                className={`${
+                className={`bg-[#0000000d] ${
                   isSmallDevice
                     ? showSidebar
-                      ? "w-[250px] fixed top-0 left-0 bg-blue-100/50 backdrop-blur-md"
+                      ? "w-[250px] fixed top-0 left-0 backdrop-blur-md"
                       : "w-[0px] fixed top-0 left-0"
-                    : "w-[310px] xl:w-[380px] sticky top-0"
+                    : expanded
+                    ? "w-[300px] sticky top-0"
+                    : "w-[60px] sticky top-0"
                 }  flex items-center justify-center overflow-hidden transition-all z-40 h-full`}
               >
                 <button
@@ -182,12 +186,26 @@ const Home = () => {
                   <IoMdClose />
                   Close
                 </button>
+
+                <div
+                  className={`w-full absolute top-2 left-0 flex ${
+                    !isSmallDevice && !expanded
+                      ? "justify-center"
+                      : "justify-end"
+                  }`}
+                >
+                  <button
+                    className={`hidden lg:flex h-[30px] w-[30px] justify-center items-center gap-1 text-gray-700`}
+                    onClick={() => setExpanded(!expanded)}
+                  >
+                    <MdArrowForward className="text-2xl" />
+                  </button>
+                </div>
+
                 <div
                   className={`${
-                    isSmallDevice
-                      ? "w-full h-full py-8"
-                      : "w-[95%] xl:w-[85%] h-[90%]"
-                  }  transition-all rounded-md p-2 bg-[#00000006] flex flex-col justify-between `}
+                    isSmallDevice ? "w-full h-full py-8" : "w-full h-[90%]"
+                  }  transition-all rounded-md p-1 flex flex-col justify-between `}
                 >
                   <div className="w-full flex flex-col gap-3 mt-4">
                     {panels?.map((item) => {
@@ -245,6 +263,8 @@ const Home = () => {
                 <div className="w-full h-full">
                   {selectedPanel == "profile" && <Profile />}
                   {selectedPanel == "leads&Enquiries" && <LeadsView />}
+                  {selectedPanel == "my_products" && <ProductsPage />}
+                  {selectedPanel == "deals" && <LeadsView />}
                 </div>
               </div>
             </div>
