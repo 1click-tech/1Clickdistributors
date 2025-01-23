@@ -81,10 +81,6 @@ const Home = () => {
 
   return (
     <div
-      // style={{
-      //   height: window.innerHeight,
-      //   width: window.innerWidth,
-      // }}
       className={`flex overflow-hidden relative pl-[45px] sm:pl-[75px] h-screen`}
     >
       <div
@@ -149,7 +145,9 @@ const Home = () => {
         />
 
         <div className="w-full h-full">
-          <h1 className="text-gray-700 text-2xl text-center">Distributor Panel</h1>
+          <h1 className="text-gray-700 text-2xl text-center">
+            Distributor Panel
+          </h1>
           {selectedPanel == "profile"}
         </div>
       </div>

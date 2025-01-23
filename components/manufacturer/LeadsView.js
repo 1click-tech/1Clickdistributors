@@ -187,7 +187,6 @@ const ListView = ({ leads, setLeads, originalData }) => {
         }
 
         let final = searchTextPass && cityCheckPass;
-        console.log("leadid", lead.leadId, "final is", final);
 
         // Return true only if all conditions pass
         return final || false;

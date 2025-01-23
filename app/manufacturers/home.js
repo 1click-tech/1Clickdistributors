@@ -18,6 +18,7 @@ import LeadsView from "@/components/manufacturer/LeadsView";
 import { AiFillProduct } from "react-icons/ai";
 import ProductsPage from "@/components/manufacturer/ProductsPage";
 import { MdArrowForward } from "react-icons/md";
+import { SiProsieben } from "react-icons/si";
 
 const Home = () => {
   const [containerHeight, setContainerHeight] = useState(null);
@@ -61,16 +62,16 @@ const Home = () => {
       value: "leads&Enquiries",
     },
     {
-      name: "My Products",
-      value: "my_products",
+      name: "Prospects",
+      value: "prospects",
     },
-    // {
-    //   name: "My allocations",
-    //   value: "my_allocations",
-    // },
     {
       name: "Deals",
       value: "deals",
+    },
+    {
+      name: "My Products",
+      value: "my_products",
     },
   ];
 
@@ -94,6 +95,8 @@ const Home = () => {
         return <CgProfile className={`${iconStyle}`} />;
       case "my_products":
         return <AiFillProduct className={`${iconStyle}`} />;
+      case "prospects":
+        return <SiProsieben className={`${iconStyle} text-base`} />;
       case "my_allocations":
         return <GoDatabase className={`${iconStyle}`} />;
       case "leads&Enquiries":
@@ -265,6 +268,7 @@ const Home = () => {
                   {selectedPanel == "leads&Enquiries" && <LeadsView />}
                   {selectedPanel == "my_products" && <ProductsPage />}
                   {selectedPanel == "deals" && <LeadsView />}
+                  {selectedPanel == "prospects" && <LeadsView />}
                 </div>
               </div>
             </div>
