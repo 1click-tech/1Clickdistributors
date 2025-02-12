@@ -66,6 +66,7 @@ const Filters = ({
       "Prospect-Followup": 0,
       "Presentation-Followup": 0,
       "Payment-Followup": 0,
+      "Hot Lead": 0,
     };
     originalData?.forEach((lead) => {
       if (!lead.salesExecutive) {
@@ -137,6 +138,7 @@ const Filters = ({
       "Prospect-Followup",
       "Presentation-Followup",
       "Payment-Followup",
+      "Hot Lead",
     ];
 
     if (filters?.btnFilter) {
@@ -163,6 +165,12 @@ const Filters = ({
       }
     }
 
+    if (filters?.btnFilter === "Hot Lead") {
+      filtered = filtered?.filter((lead) => {
+        return lead.source === "facebook";
+      });
+    }
+
     if (filters?.salesMembers?.length > 0) {
       let salesMembers = filters?.salesMembers?.map((item) => item.value);
       filtered = filtered.filter((item) =>
@@ -179,7 +187,6 @@ const Filters = ({
     // sort the data by hot lead and updated at
     if (filters?.btnFilter) {
       if (filters?.btnFilter == "Not Open") {
-        console.log("is not open soring in desc");
         filtered = filtered.sort((a, b) => {
           // Check if either object has source 'facebook'
           if (
@@ -254,6 +261,9 @@ const Filters = ({
       color: "white",
     };
   };
+
+  let finalFilters = dispositionData ? Object.keys(dispositionData) : [];
+
   return (
     <div className="flex flex-col gap-2 w-full mb-2  mt-2">
       {/* {list?.hasOwnProperty("salesMembers") &&
@@ -299,29 +309,28 @@ const Filters = ({
           </button>
         )}
 
-        {dispositionData &&
-          Object.keys(dispositionData).map((item) => (
-            <div className="flex flex-col">
-              <button
-                // disabled={
-                //   item !== "Prospect-Followup" &&
-                //   item !== "Presentation-Followup" &&
-                //   item !== "Today_Followup"
-                // }
+        {finalFilters.map((item) => (
+          <div className="flex flex-col">
+            <button
+              // disabled={
+              //   item !== "Prospect-Followup" &&
+              //   item !== "Presentation-Followup" &&
+              //   item !== "Today_Followup"
+              // }
+              style={getBtnSyle(item)}
+              className={`flex text-nowrap items-center gap-1 px-1 rounded py-[2px] text-[12px]`}
+              onClick={() => onSelectButtonFilter(item)}
+            >
+              {item?.split("_").join(" ")} ({dispositionData[item]})
+            </button>
+            {filters?.btnFilter == item && (
+              <span
                 style={getBtnSyle(item)}
-                className={`flex text-nowrap items-center gap-1 px-1 rounded py-[2px] text-[12px]`}
-                onClick={() => onSelectButtonFilter(item)}
-              >
-                {item?.split("_").join(" ")} ({dispositionData[item]})
-              </button>
-              {filters?.btnFilter == item && (
-                <span
-                  style={getBtnSyle(item)}
-                  className="p-[1px] mt-[2px] rounded-md"
-                ></span>
-              )}
-            </div>
-          ))}
+                className="p-[1px] mt-[2px] rounded-md"
+              ></span>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

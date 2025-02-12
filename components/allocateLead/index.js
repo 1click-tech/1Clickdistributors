@@ -36,6 +36,7 @@ const index = () => {
   const [pageHeight, setPageHeight] = useState(0);
   const { headerHeight } = useContext(panelContext);
   const [selectedSalesMembers, setSelectedSalesMembers] = useState([]);
+  const [visibleHotLeads, setVisibleHotLeads] = useState(false);
 
   const filterBtnsRef = useRef(null);
 
@@ -368,6 +369,12 @@ const index = () => {
           >
             Import Excel
           </button>
+          <button
+            onClick={() => setVisibleHotLeads(true)}
+            className="rounded py-1 px-2 text-sm text-white bg-gray-400 hover:bg-gray-600"
+          >
+            Hot Leads
+          </button>
 
           <div className="flex gap-2 bg-gray-200 items-end py-1 px-3 rounded-md">
             <div className="flex flex-row items-center gap-1">
@@ -488,6 +495,12 @@ const index = () => {
           <UploadExcelData onClose={() => setUploadVisible(false)} />
         </Modal>
       )}
+
+      {visibleHotLeads && (
+        <Modal>
+          <DownloadHotLeads close={() => setVisibleHotLeads(false)} />
+        </Modal>
+      )}
     </div>
   );
 };
@@ -584,132 +597,99 @@ const UploadExcelData = ({ onClose }) => {
   );
 };
 
-const WorkedLeads = ({ setWorkModalVisible }) => {
-  const [search, setSearch] = useState("");
-  const [originalData, setOriginalData] = useState([]);
-  const [updatedData, setupdatedData] = useState([]);
+const DownloadHotLeads = ({ close }) => {
+  const [loading, setLoading] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState(null);
+  const [selectedEndDate, setSelectedEndDate] = useState(null);
 
-  const getAllUpdatedLeadsCount = async () => {
+  const downloadFile = async () => {
+    if (!selectedStartDate || !selectedEndDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+    setLoading(true);
     try {
-      const token = localStorage.getItem("authToken");
-      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/leads/getUpdatedLeadsCount`;
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/leads/getHotLeads`;
       const response = await fetch(API_URL, {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          startDate: moment(selectedStartDate).format("YYYY-MM-DD"),
+          endDate: moment(selectedEndDate).format("YYYY-MM-DD"),
+        }),
       });
-      let result = await response.json();
-      if (result.success) {
-        result = result.data.map((item) => {
-          return {
-            ...item,
-            totalLeads: item?.leadCounts?.totalLeadsAssigned,
-            remainingLeads: item?.leadCounts?.remainingLeads,
-            updatedToday: item?.leadCounts?.leadsUpdatedToday,
-          };
-        });
 
-        return result;
-      } else {
-        return null;
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
+
+      // Convert the response into a Blob
+      const blob = await response.blob();
+
+      // Create a URL for the Blob and a temporary <a> element to trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "hot_leads.xlsx"; // filename for the downloaded file
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup: remove the element and revoke the Blob URL
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.log("error in getting leads", error.message);
-      return null;
+      console.error("Download error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const {
-    data: leadsStats,
-    refetch,
-    isLoading,
-  } = useQuery({
-    queryKey: ["LeadsStats"],
-    queryFn: getAllUpdatedLeadsCount,
-  });
-
-  useEffect(() => {
-    if (leadsStats) {
-      setOriginalData(leadsStats);
-      setupdatedData(leadsStats);
-    }
-  }, [leadsStats]);
-
-  useEffect(() => {
-    if (search === "") {
-      setupdatedData(originalData);
-    } else {
-      const filteredData = originalData.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-      );
-      setupdatedData(filteredData);
-    }
-  }, [search, originalData]);
-
-  const columns = useMemo(
-    () => [
-      {
-        Header: "Name",
-        accessor: "name",
-      },
-      {
-        Header: "Hierarchy",
-        accessor: "hierarchy",
-      },
-      {
-        Header: "Total Leads",
-        accessor: "totalLeads",
-      },
-      {
-        Header: "Updated Today",
-        accessor: "updatedToday",
-      },
-      {
-        Header: "Remaining Leads",
-        accessor: "remainingLeads",
-      },
-    ],
-    []
-  );
-
   return (
-    <div className="w-full h-[100vh] bg-white p-4 md:p-8 relative overflow-auto">
-      <button
-        className="absolute right-0 top-0 bg-red-600 text-white py-1 px-3 text-base"
-        onClick={() => setWorkModalVisible(false)}
-      >
-        close
-      </button>
-      {isLoading ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <img src="/loader.gif" className="h-[60px] w-auto" alt="loading" />
-        </div>
-      ) : (
-        <div className="w-full">
-          <div className="w-full flex">
-            <input
-              type="text"
-              placeholder="Search Name"
-              className="border border-gray-300 rounded-md px-3 py-2 mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onChange={(e) => {
-                // TODO: Implement search functionality
-                setSearch(e.target.value);
-              }}
-            />
-            <button
-              className="bg-colorPrimary text-white px-4 rounded"
-              onClick={refetch}
-            >
-              Refresh
-            </button>
-          </div>
-          <div className="w-full mt-4">
-            <Table data={updatedData} columns={columns} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full">
+        <div className="p-5">
+          <h2 className="text-base font-semibold text-gray-800">
+            Download Hot Leads
+          </h2>
+          <div className="flex gap-2 items-end py-1 px-3 rounded-md mt-4">
+            <div className="flex flex-row items-center gap-1">
+              <span className="text-[12px] text-gray-600">From</span>
+              <input
+                type="date"
+                className="text-[12px] border border-gray-600 rounded px-2"
+                value={selectedStartDate}
+                onChange={(e) => setSelectedStartDate(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-row items-center gap-1">
+              <span className="text-[12px] text-gray-600">To</span>
+              <input
+                type="date"
+                className="text-[12px] border border-gray-600 rounded px-2"
+                value={selectedEndDate}
+                onChange={(e) => setSelectedEndDate(e.target.value)}
+              />
+            </div>
           </div>
         </div>
-      )}
+        <div className="flex justify-end p-4">
+          <button
+            onClick={close}
+            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 mr-4"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={downloadFile}
+            disabled={loading}
+            className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 mr-2"
+          >
+            {loading ? "Downloading..." : "Download Excel"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
