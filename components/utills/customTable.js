@@ -229,7 +229,10 @@ const CustomTable = ({
             {page.map((row) => {
               prepareRow(row);
               return (
-                <tr {...row.getRowProps(getRowProps(row?.original))}>
+                <tr
+                  {...row.getRowProps(getRowProps(row?.original))}
+                  className="odd:bg-gray-100"
+                >
                   {row.cells.map((cell) => (
                     <td
                       {...cell.getCellProps()}
@@ -278,63 +281,54 @@ const CustomTable = ({
       </div>
 
       {data?.length > 9 && (
-        <div className="pagination flex gap-3 py-1 h-[7%] justify-center items-center bg-colorPrimary/20 flex-wrap">
-          <div className="flex gap-2 items-center">
-            {/* <button
-              className="h-[2rem] cursor-pointer border-2 border-slate-500 flex items-center justify-center px-1 font-semibold "
-              onClick={() => gotoPage(0)}
-              disabled={!canPreviousPage}
+        <div className="pagination flex gap-3 py-1 h-[7%] justify-center items-center bg-gray-500/10 flex-wrap">
+          <div className="flex gap-1 items-center pr-2 border-r border-gray-400">
+            <select
+              value={pageSize}
+              defaultValue={20}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+              }}
+              className="bg-gray-50 border outline-none rounded"
             >
-              {"<<"}
-            </button> */}
-            <TfiControlBackward
+              {[50, 70, 90, 120].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+
+            <span className="text-gray-500 text-sm">Items per page</span>
+          </div>
+          <div className="items-center text-sm text-gray-500 border-r border-gray-400 pr-2">
+            {pageIndex + 1} of {pageOptions.length} pages
+          </div>
+          <div className="flex gap-2 items-center ml-3">
+            {/* <TfiControlBackward
               style={{ fontSize: 23 }}
               onClick={() => gotoPage(0)}
               disabled={!canPreviousPage}
-            />
-            {/* <button
-              className="h-[2rem] cursor-pointer border-2 border-slate-500 flex items-center justify-center px-1 font-semibold "
-              onClick={() => previousPage()}
-              disabled={!canPreviousPage}
-            >
-              {"<"}
-            </button>{" "} */}
+            /> */}
             <MdOutlineArrowBackIos
               style={{ fontSize: 18 }}
               onClick={() => previousPage()}
+              className="text-gray-500 cursor-pointer"
               disabled={!canPreviousPage}
             />
-            {/* <button
-              className="h-[2rem] cursor-pointer border-2 border-slate-500 flex items-center justify-center px-1 font-semibold "
-              onClick={() => nextPage()}
-            >
-              {">"}
-            </button> */}
+            <span className="text-gray-600">{pageIndex + 1}</span>
             <MdOutlineArrowForwardIos
               style={{ fontSize: 18 }}
+              className="text-gray-500 cursor-pointer"
               onClick={() => nextPage()}
               disabled={!canNextPage}
             />
-            {/* <button
-              className="h-[2rem] cursor-pointer border-2 border-slate-500 flex items-center justify-center px-1 font-semibold "
-              onClick={() => gotoPage(pageCount - 1)}
-              disabled={!canNextPage}
-            >
-              {">>"}
-            </button>{" "} */}
-            <TfiControlForward
+            {/* <TfiControlForward
               style={{ fontSize: 23 }}
               onClick={() => gotoPage(0)}
               disabled={!canPreviousPage}
-            />
+            /> */}
           </div>
-          <span>
-            Page{" "}
-            <strong>
-              {pageIndex + 1} of {pageOptions.length}
-            </strong>{" "}
-          </span>
-          <span>
+          {/* <span>
             | Go to page:{" "}
             <input
               type="number"
@@ -346,20 +340,7 @@ const CustomTable = ({
               }}
               style={{ width: "100px" }}
             />
-          </span>{" "}
-          <select
-            value={pageSize}
-            defaultValue={20}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-            }}
-          >
-            {[50, 70, 90, 120].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
+          </span>{" "} */}
         </div>
       )}
     </div>

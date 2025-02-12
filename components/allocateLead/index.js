@@ -17,6 +17,9 @@ import { IoCloudDownloadOutline } from "react-icons/io5";
 import panelContext from "@/lib/context/panelContext";
 import FilterLeadsByMember from "../FilterLeadsByMember";
 import { leadsPanelColumns } from "@/lib/data/commonData";
+import useModal from "../hooks/useModal";
+import AnimatedModal from "../utills/AnimatedModal";
+import { useSelector } from "react-redux";
 
 const index = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -34,8 +37,10 @@ const index = () => {
   const [leads, setLeads] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [pageHeight, setPageHeight] = useState(0);
-  const { headerHeight } = useContext(panelContext);
+  const { headerHeight, userDetails } = useContext(panelContext);
   const [selectedSalesMembers, setSelectedSalesMembers] = useState([]);
+  const [deletingData, setDeletingData] = useState(false);
+  const { open, close, modalOpen } = useModal();
 
   const filterBtnsRef = useRef(null);
 
@@ -349,11 +354,75 @@ const index = () => {
     }
   }, [searchValue, data?.length]);
 
+  const deleteData = async () => {
+    try {
+      if (!selectedRows.length) {
+        return toast.error("No data selected");
+      }
+
+      console.log("data is", selectedRows);
+      setDeletingData(true);
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/leads/deleteDataFromDb`;
+      let token = localStorage.getItem("authToken");
+      // Create a FormData object to hold the file
+
+      let body = {
+        leads: selectedRows?.map((item) => item.docId),
+      };
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success(result.message);
+        close();
+        refetchLeads();
+      } else {
+        toast.error(result.message || "Something went wrong");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setDeletingData(false);
+    }
+  };
+
   return (
     <div
       className="py-1 px-2"
       style={{ height: pageHeight ? pageHeight : "auto" }}
     >
+      <AnimatedModal open={open} close={close} modalOpen={modalOpen}>
+        <div className="min-w-[30vw] max-w-[85vw] px-3 py-5 rounded-md bg-white relative">
+          <h1 className="text-gray-600 text-lg">
+            Are you sure? you want to delete {selectedRows?.length} leads
+          </h1>
+
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={deleteData}
+              disabled={deletingData}
+              className="text-white bg-red-500 py-1 px-3 rounded-md disabled:animate-pulse"
+            >
+              Delete now
+            </button>
+            <button
+              onClick={close}
+              className="text-white bg-gray-500 py-1 px-3 rounded-md"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </AnimatedModal>
+
       <div ref={filterBtnsRef} className="">
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -407,6 +476,16 @@ const index = () => {
           >
             Unselect all
           </button>
+
+          {userDetails?.hierarchy == "superAdmin" && (
+            <button
+              disabled={!selectedRows?.length}
+              className="bg-red-500 flex items-center gap-1 disabled:bg-red-500/40 disabled:cursor-not-allowed py-1 px-3 rounded-md text-white"
+              onClick={open}
+            >
+              Delete
+            </button>
+          )}
 
           <input
             value={searchValue}
