@@ -384,6 +384,7 @@ const index = () => {
         toast.success(result.message);
         close();
         refetchLeads();
+        setSelectedRows([]);
       } else {
         toast.error(result.message || "Something went wrong");
       }
