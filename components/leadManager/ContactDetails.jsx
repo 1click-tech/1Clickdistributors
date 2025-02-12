@@ -1,78 +1,151 @@
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { MdEdit } from "react-icons/md";
-import moment from "moment";
 import { designations } from "@/lib/data/commonData";
 import { toast } from "react-toastify";
 
-const ContactDetails = ({ data: lead }) => {
-  const leadDetails = lead?.leadDetails?.contact?.details;
-  const leadOfficeDetails = lead?.leadDetails?.contact?.officeDetails;
-  const leadAltContactDetails = lead?.leadDetails?.contact?.altContactDetails;
+const defaultFields = [
+  {
+    field: "full_name",
+    label: "Name",
+    type: "text",
+  },
+  {
+    field: "designation",
+    label: "Designation",
+    type: "select",
+    options: designations,
+  },
+  {
+    field: "phone_number",
+    label: "Phone Number",
+    type: "number",
+  },
+  {
+    field: "mobile_number",
+    label: "Alt Phone Number",
+    type: "number",
+  },
+  {
+    field: "contactNumber_3",
+    label: "Contact Number 3",
+    type: "number",
+  },
+  {
+    field: "contactNumber_4",
+    label: "Contact Number 4",
+    type: "number",
+  },
+  {
+    field: "email_1",
+    label: "Email 1",
+    type: "email",
+  },
+  {
+    field: "email_2",
+    label: "Email 2",
+    type: "email",
+  },
+];
+
+const contactFields = [
+  {
+    field: "name",
+    label: "Name",
+    type: "text",
+  },
+  {
+    field: "designation",
+    label: "Designation",
+    type: "select",
+    options: designations,
+  },
+  {
+    field: "phone_number",
+    label: "Phone Number",
+    type: "number",
+  },
+  {
+    field: "mobile_number",
+    label: "Alt Phone Number",
+    type: "number",
+  },
+  {
+    field: "email_1",
+    label: "Email 1",
+    type: "email",
+  },
+  {
+    field: "email_2",
+    label: "Email 2",
+    type: "email",
+  },
+  {
+    field: "address",
+    label: "Address",
+    type: "text",
+  },
+];
+
+const ContactDetails = ({ data: lead, refetch }) => {
+  const leadData = lead?.leadData;
+  const { register, handleSubmit, setValue } = useForm();
 
   const [edit, setEdit] = useState(false);
-  const [details, setDetails] = useState({
-    designation: leadDetails?.designation || "",
-    altPhoneNumber: leadDetails?.altPhoneNumber || "",
-    contactNumber_3: leadDetails?.contactNumber_3 || "",
-    contactNumber_4: leadDetails?.contactNumber_4 || "",
-    email_1: leadDetails?.email_1 || "",
-    email_2: leadDetails?.email_2 || "",
-  });
-
-  const [officeContact, setOfficeContact] = useState({
-    name: leadOfficeDetails?.name || "",
-    designation: leadOfficeDetails?.designation || "",
-    phone_number: leadOfficeDetails?.phone_number || "",
-    altPhoneNumber: leadOfficeDetails?.altPhoneNumber || "",
-    email_1: leadOfficeDetails?.email_1 || "",
-    email_2: leadOfficeDetails?.email_2 || "",
-    address: leadOfficeDetails?.address || "",
-  });
-
-  const [altContact, setAltContact] = useState({
-    name: leadAltContactDetails?.name || "",
-    designation: leadAltContactDetails?.designation || "",
-    phone_number: leadAltContactDetails?.phone_number || "",
-    altPhoneNumber: leadAltContactDetails?.altPhoneNumber || "",
-    email_1: leadAltContactDetails?.email_1 || "",
-    email_2: leadAltContactDetails?.email_2 || "",
-    address: leadAltContactDetails?.address || "",
-  });
 
   useEffect(() => {
-    setDetails((pre) => ({ ...pre, designation: designations[0] }));
-    setAltContact((pre) => ({ ...pre, designation: designations[0] }));
-    setOfficeContact((pre) => ({ ...pre, designation: designations[0] }));
-  }, []);
+    if (leadData) {
+      setValue("full_name", leadData?.full_name || "");
+      setValue("designation", leadData?.designation || "");
+      setValue("phone_number", leadData?.phone_number || "");
+      setValue("mobile_number", leadData?.mobile_number || "");
+      setValue("contactNumber_3", leadData?.contactNumber_3 || "");
+      setValue("contactNumber_4", leadData?.contactNumber_4 || "");
+      setValue("email_1", leadData?.email_1 || "");
+      setValue("email_2", leadData?.email_2 || "");
+      setValue("officeContact.name", leadData?.officeContact?.name || "");
+      setValue(
+        "officeContact.designation",
+        leadData?.officeContact?.designation || ""
+      );
+      setValue(
+        "officeContact.phone_number",
+        leadData?.officeContact?.phone_number || ""
+      );
+      setValue(
+        "officeContact.mobile_number",
+        leadData?.officeContact?.mobile_number || ""
+      );
+      setValue("officeContact.email_1", leadData?.officeContact?.email_1 || "");
+      setValue("officeContact.email_2", leadData?.officeContact?.email_2 || "");
+      setValue("officeContact.address", leadData?.officeContact?.address || "");
+      setValue("altContact.name", leadData?.altContact?.name || "");
+      setValue(
+        "altContact.designation",
+        leadData?.altContact?.designation || ""
+      );
+      setValue(
+        "altContact.phone_number",
+        leadData?.altContact?.phone_number || ""
+      );
+      setValue(
+        "altContact.mobile_number",
+        leadData?.altContact?.mobile_number || ""
+      );
+      setValue("altContact.email_1", leadData?.altContact?.email_1 || "");
+      setValue("altContact.email_2", leadData?.altContact?.email_2 || "");
+      setValue("altContact.address", leadData?.altContact?.address || "");
+    }
+  }, [setValue, leadData]);
 
   const toggleEdit = () => setEdit(!edit);
 
-  const onChangeDetails = (e) => {
-    const { name, value } = e.target;
-    setDetails((pre) => ({ ...pre, [name]: value }));
-  };
-  const onChangeAltContact = (e) => {
-    const { name, value } = e.target;
-    setAltContact((pre) => ({ ...pre, [name]: value }));
-  };
-  const onChangeOfficeContact = (e) => {
-    const { name, value } = e.target;
-    setOfficeContact((pre) => ({ ...pre, [name]: value }));
-  };
-
-  const updateContactDetails = async () => {
+  const updateContactDetails = async (data) => {
     try {
       if (!lead?.leadData?.leadId) {
         toast.error("Something went wrong");
         return;
       }
-      const body = {
-        contactDetails: {
-          details,
-          officeDetails: officeContact,
-          altContactDetails: altContact,
-        },
-      };
 
       const token = localStorage.getItem("authToken");
       let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/sales/contactDetails`;
@@ -82,12 +155,16 @@ const ContactDetails = ({ data: lead }) => {
           Authorization: `Bearer ${token}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ ...body, leadId: lead?.leadData?.leadId }),
+        body: JSON.stringify({
+          contactDetails: data,
+          leadId: lead?.leadData?.leadId,
+        }),
       });
 
-      const data = await response.json();
-      if (data.success) {
-        toast.success(data.message);
+      const responseData = await response.json();
+      if (responseData.success) {
+        toast.success(responseData.message);
+        refetch();
         setEdit(false);
       } else {
         toast.error("Something went wrong");
@@ -106,677 +183,124 @@ const ContactDetails = ({ data: lead }) => {
       >
         <MdEdit className="text-gray-700 text-3xl" />
       </button>
-      <div className="p-4">
-        {/* contact details */}
-        <div>
-          <div className="flex items-center gap-4">
+      <form onSubmit={handleSubmit(updateContactDetails)} className="p-4">
+        {defaultFields.map((item, index) => (
+          <div className="flex items-center gap-4 mt-2" key={index}>
             <LeftBox>
-              <label
-                htmlFor="companyName"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Name:
+              <label className="text-gray-700 font-semibold">
+                {item.label}
               </label>
             </LeftBox>
             <RightBox>
-              {edit ? (
-                <input
-                  type="text"
-                  id="companyName"
-                  name="companyName"
-                  value={details.companyName}
-                  onChange={onChangeDetails}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="Enter Name"
-                />
-              ) : (
-                <p className="text-gray-700">{details.companyName || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="designation"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Designation:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
+              {item.type === "select" ? (
                 <select
-                  className={`border p-2 rounded-md border-gray-400 w-full md:max-w-[170px]`}
-                  name={"designation"}
-                  value={details.designation}
-                  onChange={onChangeDetails}
+                  {...register(item.field)}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
                 >
-                  {designations?.map((designantion, idx) => (
-                    <option key={idx.toString()} value={designantion}>
-                      {designantion}
+                  <option value="">Select {item.label}</option>
+                  {item.options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
               ) : (
-                <p className="text-gray-700">{details.designation || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-4">
-            <LeftBox>
-              <label
-                htmlFor="contactNumber"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Contact Number:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
                 <input
-                  type="number"
-                  id="contactNumber"
-                  name="contactNumber"
-                  value={details.contactNumber}
-                  onChange={onChangeDetails}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="Enter Contact Number"
+                  {...register(item.field)}
+                  placeholder={`Enter ${item.label}`}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
+                  type={item.type}
                 />
-              ) : (
-                <p className="text-gray-700">{details.contactNumber || "NA"}</p>
               )}
             </RightBox>
           </div>
-          <div className="flex items-center gap-4 mt-2">
+        ))}
+        <h3 className="text-black text-base font-semibold mt-6">
+          Alternative Contact Details
+        </h3>
+        {contactFields.map((item, index) => (
+          <div className="flex items-center gap-4 mt-2" key={index}>
             <LeftBox>
-              <label
-                htmlFor="altPhoneNumber"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Alt Contact Number:
+              <label className="text-gray-700 font-semibold">
+                {item.label}
               </label>
             </LeftBox>
             <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="altPhoneNumber"
-                  name="altPhoneNumber"
-                  value={details.altPhoneNumber}
-                  onChange={onChangeDetails}
-                  placeholder="Enter Alternative phone"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {details.altPhoneNumber || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="contactNumber_3"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Contact Number-3:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="contactNumber_3"
-                  name="contactNumber_3"
-                  value={details.contactNumber_3}
-                  onChange={onChangeDetails}
-                  placeholder="Enter Contact Number-3"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {details.contactNumber_3 || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="contactNumber_4"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Contact Number-4:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="contactNumber_4"
-                  name="contactNumber_4"
-                  value={details.contactNumber_4}
-                  onChange={onChangeDetails}
-                  placeholder="Enter Contact Number-4"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {details.contactNumber_4 || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_1"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-1:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_1"
-                  name="email_1"
-                  value={details.email_1}
-                  onChange={onChangeDetails}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="example@gmail.com"
-                />
-              ) : (
-                <p className="text-gray-700">{details.email_1 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_2"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-2:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_2"
-                  name="email_2"
-                  value={details.email_2}
-                  onChange={onChangeDetails}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="example@gmail.com"
-                />
-              ) : (
-                <p className="text-gray-700">{details.email_2 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-        </div>
-        <div className="mt-4 md:mt-6">
-          <h3 className="text-black text-base font-semibold">
-            Alternative Contact Details
-          </h3>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="name"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Name:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={altContact.name}
-                  onChange={onChangeAltContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="Enter Name"
-                />
-              ) : (
-                <p className="text-gray-700">{altContact.name || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="designation"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Designation:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
+              {item.type === "select" ? (
                 <select
-                  className={`border p-2 rounded-md border-gray-400 w-full md:max-w-[170px]`}
-                  name={"designation"}
-                  value={altContact.designation}
-                  onChange={onChangeAltContact}
+                  {...register(`altContact.${item.field}`)}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
                 >
-                  {designations?.map((designantion, idx) => (
-                    <option key={idx.toString()} value={designantion}>
-                      {designantion}
+                  <option value="">Select {item.label}</option>
+                  {item.options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
               ) : (
-                <p className="text-gray-700">
-                  {altContact.designation || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-4">
-            <LeftBox>
-              <label
-                htmlFor="address"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Office Address:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
                 <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={altContact.address}
-                  onChange={onChangeAltContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="office address"
+                  {...register(`altContact.${item.field}`)}
+                  placeholder={`Enter ${item.label}`}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
+                  type={item.type}
                 />
-              ) : (
-                <p className="text-gray-700">{altContact.address || "NA"}</p>
               )}
             </RightBox>
           </div>
-          <div className="flex items-center gap-4 mt-4">
+        ))}
+        <h3 className="text-black text-base font-semibold mt-6">
+          Office Contact Details
+        </h3>
+        {contactFields.map((item, index) => (
+          <div className="flex items-center gap-4 mt-2" key={index}>
             <LeftBox>
-              <label
-                htmlFor="phone_number"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Contact Number:
+              <label className="text-gray-700 font-semibold">
+                {item.label}
               </label>
             </LeftBox>
             <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="phone_number"
-                  name="phone_number"
-                  value={altContact.phone_number}
-                  onChange={onChangeAltContact}
-                  placeholder="Enter phone number"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {altContact.phone_number || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="altPhoneNumber"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Alt Contact Number:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="altPhoneNumber"
-                  name="altPhoneNumber"
-                  value={altContact.altPhoneNumber}
-                  onChange={onChangeAltContact}
-                  placeholder="Enter Alternative phone"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {altContact.altPhoneNumber || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_1"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-1:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_1"
-                  name="email_1"
-                  value={altContact.email_1}
-                  onChange={onChangeAltContact}
-                  placeholder="example@gmail.com"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">{altContact.email_1 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_2"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-2:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_2"
-                  name="email_2"
-                  value={altContact.email_2}
-                  onChange={onChangeAltContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="example@gmail.com"
-                />
-              ) : (
-                <p className="text-gray-700">{altContact.email_2 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-        </div>
-        {/* office contace details */}
-        <div className="mt-4 md:mt-6">
-          <h3 className="text-black text-base font-semibold">Office contact</h3>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="name"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Name:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={officeContact.name}
-                  onChange={onChangeOfficeContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="Enter Name"
-                />
-              ) : (
-                <p className="text-gray-700">{officeContact.name || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="designation"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Designation:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
+              {item.type === "select" ? (
                 <select
-                  className={`border p-2 rounded-md border-gray-400 w-full md:max-w-[170px]`}
-                  name={"designation"}
-                  value={officeContact.designation}
-                  onChange={onChangeOfficeContact}
+                  {...register(`officeContact.${item.field}`)}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
                 >
-                  {designations?.map((designantion, idx) => (
-                    <option key={idx.toString()} value={designantion}>
-                      {designantion}
+                  <option value="">Select {item.label}</option>
+                  {item.options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
               ) : (
-                <p className="text-gray-700">
-                  {officeContact.designation || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-4">
-            <LeftBox>
-              <label
-                htmlFor="address"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Office Address:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
                 <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={officeContact.address}
-                  onChange={onChangeOfficeContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="Office address"
+                  {...register(`officeContact.${item.field}`)}
+                  placeholder={`Enter ${item.label}`}
+                  className="input-field flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none md:w-72"
+                  type={item.type}
                 />
-              ) : (
-                <p className="text-gray-700">{officeContact.address || "NA"}</p>
               )}
             </RightBox>
           </div>
-          <div className="flex items-center gap-4 mt-4">
-            <LeftBox>
-              <label
-                htmlFor="phone_number"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Contact Number:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="number"
-                  id="phone_number"
-                  name="phone_number"
-                  value={officeContact.phone_number}
-                  onChange={onChangeOfficeContact}
-                  placeholder="Enter phone number"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {officeContact.phone_number || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="altPhoneNumber"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Alt Contact Number:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="tel"
-                  id="altPhoneNumber"
-                  name="altPhoneNumber"
-                  value={officeContact.altPhoneNumber}
-                  onChange={onChangeOfficeContact}
-                  placeholder="Enter Alternative phone"
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                />
-              ) : (
-                <p className="text-gray-700">
-                  {officeContact.altPhoneNumber || "NA"}
-                </p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_1"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-1:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_1"
-                  name="email_1"
-                  value={officeContact.email_1}
-                  onChange={onChangeOfficeContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="example@gmail.com"
-                />
-              ) : (
-                <p className="text-gray-700">{officeContact.email_1 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            <LeftBox>
-              <label
-                htmlFor="email_2"
-                className=" text-gray-700 font-semibold nowrap"
-              >
-                Mail-2:
-              </label>
-            </LeftBox>
-            <RightBox>
-              {edit ? (
-                <input
-                  type="email"
-                  id="email_2"
-                  name="email_2"
-                  value={officeContact.email_2}
-                  onChange={onChangeOfficeContact}
-                  className={`flex-1 px-3 py-2 ${
-                    edit &&
-                    "border border-gray-300 rounded-md focus:outline-none md:max-w-72"
-                  }`}
-                  placeholder="example@gmail.com"
-                />
-              ) : (
-                <p className="text-gray-700">{officeContact.email_2 || "NA"}</p>
-              )}
-            </RightBox>
-          </div>
-        </div>
-
+        ))}
         <button
-          disabled={!edit}
-          className={`mt-8 bg-colorPrimary text-white p-2 rounded-md w-full max-w-52 ${
-            edit ? "opacity-100" : "opacity-70"
-          }`}
-          onClick={updateContactDetails}
+          type="submit"
+          className="mt-8 bg-colorPrimary text-white p-2 rounded-md w-full max-w-52"
         >
           Submit
         </button>
-      </div>
+      </form>
     </div>
   );
 };
 
-const LeftBox = ({ children }) => {
-  return <div className="w-40 text-left">{children}</div>;
-};
-const RightBox = ({ children }) => {
-  return (
-    <div className="flex-1 text-left">
-      <div className="max-w-64  ">{children}</div>
-    </div>
-  );
-};
+const LeftBox = ({ children }) => (
+  <div className="w-40 text-left">{children}</div>
+);
+const RightBox = ({ children }) => (
+  <div className="flex-1 text-left">
+    <div className="max-w-64">{children}</div>
+  </div>
+);
 
 export default ContactDetails;

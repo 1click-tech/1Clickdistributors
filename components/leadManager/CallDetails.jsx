@@ -8,7 +8,7 @@ import { authSelector } from "@/store/auth/selector";
 import Modal from "../utills/Modal";
 import { AiOutlineClose } from "react-icons/ai";
 
-const CallDetails = ({ data: leadDetails, refetchLead }) => {
+const CallDetails = ({ data: leadDetails, refetchLead, onClose }) => {
   const userData = useSelector(authSelector);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -105,6 +105,7 @@ const CallDetails = ({ data: leadDetails, refetchLead }) => {
           followUpDate: "",
           remarks: "",
         });
+        onClose();
       } else {
         toast.error("Something went wrong");
       }

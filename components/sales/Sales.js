@@ -10,6 +10,7 @@ import LeadManager from "../leadManager/index";
 import Filters from "../allocateLead/filters";
 import panelContext from "@/lib/context/panelContext";
 import FilterLeadsByMember from "../FilterLeadsByMember";
+import { IoMdRefresh } from "react-icons/io";
 
 const salesFilters = ["All", "Pendings", "New Leads", "Follow Ups"];
 
@@ -384,6 +385,29 @@ export default function Sales() {
     refetchLeads();
   };
 
+  const getCountOfAssignedLeads = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/sales/getTotalAssignedLeads`;
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log("error in getting roles", error.message);
+    }
+  };
+
+  const { data: assignedData, refetch: refreshAssigned } = useQuery({
+    queryKey: ["assignedLeadsCount"],
+    queryFn: getCountOfAssignedLeads,
+  });
+
   return (
     <div className="pt-1" style={{ height: pageHeight || "auto" }}>
       <div className="px-1" ref={filterBtnsRef}>
@@ -435,6 +459,14 @@ export default function Sales() {
             >
               My Data
             </button>
+            {assignedData?.totalLeads && (
+              <div className="flex-row flex items-center gap-1">
+                <span className="text-gray-700 font-medium text-lg">{`(${assignedData?.totalLeads})`}</span>
+                <button onClick={refreshAssigned}>
+                  <IoMdRefresh size={20} />
+                </button>
+              </div>
+            )}
           </div>
 
           <Filters
