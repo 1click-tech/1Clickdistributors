@@ -36,6 +36,7 @@ export default function Sales() {
   const userDetails = useContext(panelContext);
   const { headerHeight } = useContext(panelContext);
   const [selectedSalesMembers, setSelectedSalesMembers] = useState([]);
+  const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
 
   useEffect(() => {
     if (headerHeight) {
@@ -156,6 +157,14 @@ export default function Sales() {
 
   const staticColumns = [];
 
+  const handleSelectedLead = (row) => {
+    const leadId = row?.original?.leadId;
+    const indexOfLead = leads?.map((lead) => lead?.leadId).indexOf(leadId);
+    setSelectedRows([row?.original]);
+    setShowLeadManager(true);
+    setCurrentLeadIndex(indexOfLead);
+  };
+
   let updateBtn = ["Select"].map((key) => {
     return {
       Header: camelToTitle(key),
@@ -163,10 +172,7 @@ export default function Sales() {
         <div className="flex justify-center">
           <button
             className="text-blue-500 font-semibold hover:underline"
-            onClick={() => {
-              setSelectedRows([row?.original]);
-              setShowLeadManager(true);
-            }}
+            onClick={() => handleSelectedLead(row)}
           >
             Update
           </button>
@@ -194,10 +200,7 @@ export default function Sales() {
               Cell: ({ row }) => {
                 return (
                   <button
-                    onClick={() => {
-                      setSelectedRows([row?.original]);
-                      setShowLeadManager(true);
-                    }}
+                    onClick={() => handleSelectedLead(row)}
                     className="text-blue-500 font-semibold hover:underline"
                   >
                     {row?.original?.profileId}
@@ -325,8 +328,6 @@ export default function Sales() {
     }
   }, [followUps]);
 
-  console.log("followups", followUps);
-
   // Lock leads
   const getLockLeadsStatus = async () => {
     try {
@@ -407,6 +408,24 @@ export default function Sales() {
     queryKey: ["assignedLeadsCount"],
     queryFn: getCountOfAssignedLeads,
   });
+
+  const goToNextLead = () => {
+    if (currentLeadIndex < leads?.length) {
+      const newIndex = currentLeadIndex + 1;
+      const currentLead = leads[newIndex];
+      setSelectedRows([currentLead]);
+      setCurrentLeadIndex(newIndex);
+    }
+  };
+
+  const goToPreviousLead = async () => {
+    if (currentLeadIndex > 0) {
+      const newIndex = currentLeadIndex - 1;
+      const currentLead = leads[newIndex];
+      setSelectedRows([currentLead]);
+      setCurrentLeadIndex(newIndex);
+    }
+  };
 
   return (
     <div className="pt-1" style={{ height: pageHeight || "auto" }}>
@@ -547,6 +566,10 @@ export default function Sales() {
           onClose={() => setShowLeadManager(false)}
           lead={selectedRows[0]}
           fetchLeadsAgain={fetchLeadsAgain}
+          goToNextLead={goToNextLead}
+          goToPreviousLead={goToPreviousLead}
+          currentLeadIndex={currentLeadIndex}
+          totalLeads={leads?.length}
         />
       )}
 

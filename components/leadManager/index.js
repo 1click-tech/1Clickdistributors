@@ -17,7 +17,14 @@ const tabs = [
   "Contract Details",
 ];
 
-export default function LeadManager({ onClose, lead }) {
+export default function LeadManager({
+  onClose,
+  lead,
+  goToPreviousLead,
+  goToNextLead,
+  currentLeadIndex,
+  totalLeads,
+}) {
   const { leadId } = lead;
 
   const getLeadDetails = async () => {
@@ -59,12 +66,39 @@ export default function LeadManager({ onClose, lead }) {
           >
             refetch
           </button> */}
-          <button
-            className="absolute right-0 top-1 px-3 py-1 group"
-            onClick={onClose}
-          >
-            <AiOutlineClose className="text-lg text-gray-500 group-hover:text-gray-600" />
-          </button>
+          <div className="absolute right-0 top-1 flex flex-row">
+            <div className="flex flex-row gap-2 ml-4">
+              <button
+                onClick={goToPreviousLead}
+                disabled={currentLeadIndex === 0}
+                className={`px-3 py-1 bg-slate-200 text-blue-500 ${
+                  currentLeadIndex > 0 && "hover:text-blue-600"
+                } text-sm font-medium ${
+                  currentLeadIndex > 0 && "hover:bg-slate-300"
+                } ${currentLeadIndex === 0 ? "opacity-60" : "opacity-100"}`}
+              >
+                Back
+              </button>
+              <button
+                onClick={goToNextLead}
+                disabled={currentLeadIndex === totalLeads - 1}
+                className={`px-3 py-1 bg-slate-200 text-blue-500 ${
+                  currentLeadIndex < totalLeads && "hover:text-blue-600"
+                } text-sm font-medium ${
+                  currentLeadIndex < totalLeads && "hover:bg-slate-300"
+                } ${
+                  currentLeadIndex === totalLeads - 1
+                    ? "opacity-60"
+                    : "opacity-100"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+            <button className="px-3 py-1 group" onClick={onClose}>
+              <AiOutlineClose className="text-lg text-gray-500 group-hover:text-gray-600" />
+            </button>
+          </div>
           {isLoading ? (
             <div className="w-full h-full flex items-center justify-center">
               <img
