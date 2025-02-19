@@ -37,7 +37,7 @@ const defaultFields = [
     type: "number",
   },
   {
-    field: "email_1",
+    field: "email",
     label: "Email 1",
     type: "email",
   },
@@ -101,7 +101,7 @@ const ContactDetails = ({ data: lead, refetch }) => {
       setValue("mobile_number", leadData?.mobile_number || "");
       setValue("contactNumber_3", leadData?.contactNumber_3 || "");
       setValue("contactNumber_4", leadData?.contactNumber_4 || "");
-      setValue("email_1", leadData?.email_1 || "");
+      setValue("email", leadData?.email || "");
       setValue("email_2", leadData?.email_2 || "");
       setValue("officeContact.name", leadData?.officeContact?.name || "");
       setValue(
