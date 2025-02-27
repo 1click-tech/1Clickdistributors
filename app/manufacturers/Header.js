@@ -11,10 +11,10 @@ const Header = () => {
         <RxHamburgerMenu className="text-orange-800 text-2xl" />
       </button>
 
-      <img
+      {/* <img
         src={userDetails?.userImageLink}
         className="h-[40px] w-auto rounded-full shadow-large border border-gray-500"
-      />
+      /> */}
     </div>
   );
 };

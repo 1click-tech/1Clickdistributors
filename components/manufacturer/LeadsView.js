@@ -6,7 +6,7 @@ import { Tooltip } from "react-tooltip";
 import manufacturerContext from "@/lib/context/manufacturerContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { CiLocationOn } from "react-icons/ci";
-import LeadDetailView from "./LeadDetailView";
+import LeadDetailView from "./leadDetailView";
 import { vibrantColors } from "@/lib/data/commonData";
 import { toast } from "react-toastify";
 import AnimatedModal from "../utills/AnimatedModal";
@@ -30,8 +30,10 @@ const LeadsView = () => {
     check();
 
     window.addEventListener("resize", check);
-
-    return () => window.removeEventListener("resize", check);
+    return () => {
+      window.removeEventListener("resize", check);
+      setSelectedLead(null);
+    };
   }, []);
 
   const getLeads = async () => {
@@ -102,7 +104,7 @@ const LeadsView = () => {
       <div
         className={`${
           isSmallDevice ? (selectedLead ? "hidden" : "flex w-full") : ""
-        } w-full ${
+        } ${
           !selectedLead ? "w-full" : "md:w-[42%] xl:w-[35%]"
         }  h-full flex flex-col gap-2 items-center`}
       >
@@ -394,7 +396,7 @@ const Filters = ({
     <div className="w-[85vw] sm:w-[40vw] lg:w-[20vw] h-[60vh] rounded-md relative">
       <div className="h-[95%] w-full overflow-auto">
         <h1 className="text-gray-500 text-lg font-semibold">Filters</h1>
-        <div className="w-full p-2 shadow-md rounded-md transition-all mt-1">
+        <div className="w-full p-2 shadow-md rounded-md  mt-1">
           <div className="flex justify-between items-center">
             <span className="text-base text-gray-600">Location</span>
             <IoMdAdd
@@ -423,7 +425,7 @@ const Filters = ({
           )}
         </div>
 
-        <div className="w-full p-2 shadow-md rounded-md transition-all mt-2">
+        <div className="w-full p-2 shadow-md rounded-md mt-2">
           <div className="flex justify-between items-center">
             <span className="text-base text-gray-600">Source</span>
             <IoMdAdd

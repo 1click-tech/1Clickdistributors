@@ -1,28 +1,20 @@
 import manufacturerContext from "@/lib/context/manufacturerContext";
-import panelContext from "@/lib/context/panelContext";
 import React, { useContext, useEffect, useState } from "react";
 import CustomInput from "../uiCompoents/CustomInput";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
-import {
-  MdEmail,
-  MdKeyboardArrowUp,
-  MdOutlineCurrencyRupee,
-  MdOutlinePassword,
-  MdOutlinePersonPinCircle,
-} from "react-icons/md";
-import {
-  FaAddressCard,
-  FaBuilding,
-  FaCity,
-  FaNetworkWired,
-} from "react-icons/fa6";
-import { FaCamera } from "react-icons/fa";
+import { MdEmail, MdKeyboardArrowUp } from "react-icons/md";
+import { FaCity, FaNetworkWired } from "react-icons/fa6";
 import { MdOutlineEdit } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
 import { CiLocationOn } from "react-icons/ci";
 import { MdKeyboardArrowDown } from "react-icons/md";
-import CustomSelector from "../uiCompoents/CustomSelector";
+import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
+import { IoIosSave } from "react-icons/io";
+import TaxDetails from "./profileComponents/TaxDetails";
+import BankDetails from "./profileComponents/BankDetails";
+import BusinessProfile from "./profileComponents/BankDetails";
 
 const rowStyle = "w-full flex justify-between py-1 flex-col md:flex-row gap-4";
 const rowItemStyle = "w-full md:w-[46%]";
@@ -32,31 +24,57 @@ const Profile = () => {
   const { userDetails } = useContext(manufacturerContext);
   const [isEditing, setIsEditing] = useState(false);
   const [showSections, setShowSections] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const [data, setData] = useState({
-    name: "",
-    phone: null,
+    full_name: "",
+    phone_number: null,
     email: null,
     password: "",
+    city: "",
   });
 
   useEffect(() => {
     if (userDetails) {
       setData({
-        name: userDetails?.name,
-        phone: userDetails?.phone,
+        full_name: userDetails?.full_name,
+        phone_number: userDetails?.phone_number,
         email: userDetails?.email,
         password: userDetails.password,
+        city: userDetails.city,
       });
     }
   }, [userDetails]);
 
   const saveChanges = async () => {
     try {
-      console.log("data is", data);
-      setIsEditing(false);
+      // setIsEditing(false);
+      setLoading(true);
+      const token = localStorage.getItem("authToken");
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/admin/auth/updateUserProfile`;
+      let body = { ...data };
+      body.phone_number = parseInt(body.phone_number) || null;
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const ress = await response.json();
+      if (ress.success) {
+        toast.success(ress.message);
+        queryClient.invalidateQueries(["currentUserDetail"]);
+      } else {
+        toast.error(ress.message || "Something went wrong");
+      }
     } catch (error) {
       console.log("error in savechanges", error.message);
+    } finally {
+      setLoading(false);
+      setIsEditing(false);
     }
   };
 
@@ -66,9 +84,14 @@ const Profile = () => {
 
   return (
     <div className="w-full h-full p-2 flex flex-col items-center gap-2">
+      {/* {loading && (
+        <div className="my-1 w-full flex justify-center absolute top-0 left-0">
+          <img src="/loader.gif" className="h-10 w-10" />
+        </div>
+      )} */}
       <div className="w-[95%] lg:w-[80%] mt-2 ">
         <h1 className="text-gray-700 font-semibold text-xl px-2">
-          Profile Details
+          Personal Details
         </h1>
         <div className="p-3 w-full bg-white rounded-md mt-1">
           {/* user small details */}
@@ -80,7 +103,7 @@ const Profile = () => {
 
             <div className="flex flex-col gap-[2px]">
               <span className="text-gray-500 font-semibold text-base">
-                {userDetails?.name}
+                {userDetails?.full_name}
               </span>
               <span className="text-sm text-orange-800 bg-orange-200/30 py-[1px] px-2 rounded-full w-fit">
                 Manufacturer
@@ -99,8 +122,8 @@ const Profile = () => {
               <div className={`${rowItemStyle}`}>
                 <CustomInput
                   label={"Your Name"}
-                  value={data?.name}
-                  onChangeValue={(value) => onChangeValue(value, "name")}
+                  value={data?.full_name}
+                  onChangeValue={(value) => onChangeValue(value, "full_name")}
                   disabled={!isEditing}
                   icon={<FaUser className={`${iconStyle}`} />}
                 />
@@ -128,7 +151,7 @@ const Profile = () => {
                 <CustomInput
                   label={"Alt Email"}
                   onChangeValue={(value) => onChangeValue(value, "altEmail")}
-                  value={userDetails?.altEmail}
+                  value={data?.altEmail}
                   disabled={!isEditing}
                   icon={<MdEmail className={`${iconStyle}`} />}
                 />
@@ -138,8 +161,10 @@ const Profile = () => {
               <div className={`${rowItemStyle}`}>
                 <CustomInput
                   label={"Your Phone"}
-                  value={data?.phone}
-                  onChangeValue={(value) => onChangeValue(value, "phone")}
+                  value={data?.phone_number}
+                  onChangeValue={(value) =>
+                    onChangeValue(value, "phone_number")
+                  }
                   type="number"
                   disabled={!isEditing}
                   icon={<FaPhoneAlt className={`${iconStyle}`} />}
@@ -147,23 +172,34 @@ const Profile = () => {
               </div>
               <div className={`${rowItemStyle}`}>
                 <CustomInput
-                  label={"City"}
-                  value={userDetails?.city}
+                  label={`City`}
+                  value={data?.city}
                   onChangeValue={(value) => onChangeValue(value, "city")}
+                  type="text"
                   icon={<FaCity className={`${iconStyle}`} />}
                   disabled={!isEditing}
                 />
               </div>
             </div>
 
-            <div className={`w-full flex justify-end mt-6`}>
+            <div className={`w-full flex justify-end mt-6 gap-3`}>
+              <button
+                onClick={() =>
+                  queryClient.invalidateQueries(["currentUserDetail"])
+                }
+                className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
+              >
+                <CiSaveUp2 />
+                refetchData
+              </button>
               {isEditing ? (
                 <button
                   onClick={saveChanges}
-                  className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
+                  disabled={loading}
+                  className="px-2 md:px-3 flex disabled:bg-blue-300 disabled:animate-pulse items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
                 >
-                  <CiSaveUp2 />
-                  Save changes
+                  <IoIosSave />
+                  {loading ? "Saving..." : "Save changes"}
                 </button>
               ) : (
                 <button
@@ -209,162 +245,68 @@ const Profile = () => {
         </div>
         {showSections.includes("businessDetails") && <BusinessProfile />}
       </div>
+
+      {/* Tax details */}
+      <div className="w-[95%] lg:w-[80%] mt-2 ">
+        <div
+          className={`w-full flex justify-between p-2 ${
+            showSections.includes("taxDetails")
+              ? "bg-transparent"
+              : "bg-white rounded-md"
+          }`}
+        >
+          <h1 className="text-gray-700 font-semibold text-xl">Tax Details</h1>
+
+          {showSections.includes("taxDetails") ? (
+            <button>
+              <MdKeyboardArrowUp
+                onClick={() => setShowSections([])}
+                className="text-2xl"
+              />
+            </button>
+          ) : (
+            <button>
+              <MdKeyboardArrowDown
+                onClick={() => setShowSections(["taxDetails"])}
+                className="text-3xl"
+              />
+            </button>
+          )}
+        </div>
+        {showSections.includes("taxDetails") && <TaxDetails />}
+      </div>
+
+      {/* Bank details */}
+      <div className="w-[95%] lg:w-[80%] mt-2 ">
+        <div
+          className={`w-full flex justify-between p-2 ${
+            showSections.includes("bankDetail")
+              ? "bg-transparent"
+              : "bg-white rounded-md"
+          }`}
+        >
+          <h1 className="text-gray-700 font-semibold text-xl">Bank Details</h1>
+
+          {showSections.includes("bankDetail") ? (
+            <button>
+              <MdKeyboardArrowUp
+                onClick={() => setShowSections([])}
+                className="text-2xl"
+              />
+            </button>
+          ) : (
+            <button>
+              <MdKeyboardArrowDown
+                onClick={() => setShowSections(["bankDetail"])}
+                className="text-3xl"
+              />
+            </button>
+          )}
+        </div>
+        {showSections.includes("bankDetail") && <BankDetails />}
+      </div>
     </div>
   );
 };
 
 export default Profile;
-
-const BusinessProfile = () => {
-  const { userDetails } = useContext(manufacturerContext);
-  const [isEditing, setIsEditing] = useState(false);
-  const [showSections, setShowSections] = useState([]);
-
-  const [data, setData] = useState({
-    name: "",
-    phone: null,
-    email: null,
-    password: "",
-  });
-
-  useEffect(() => {
-    if (userDetails) {
-      setData({
-        ...userDetails,
-        name: userDetails?.name,
-        phone: userDetails?.phone,
-        email: userDetails?.email,
-        password: userDetails.password,
-      });
-    }
-  }, [userDetails]);
-
-  const saveChanges = async () => {
-    try {
-      console.log("data is", data);
-      setIsEditing(false);
-    } catch (error) {
-      console.log("error in savechanges", error.message);
-    }
-  };
-
-  const onChangeValue = (value, fieldName) => {
-    setData((pre) => ({ ...pre, [fieldName]: value }));
-  };
-
-  const companyTypes = [
-    { label: "Small", value: "Small" },
-    { label: "Medium", value: "Medium" },
-    { label: "Large", value: "Large" },
-  ];
-
-  const values = [
-    { label: "Thousands", value: "thousand" },
-    { label: "Lakhs", value: "lakh" },
-    { label: "Crores", value: "crore" },
-  ];
-
-  return (
-    <div className="w-full h-full flex flex-col items-center">
-      <div className="w-full">
-        <div className="p-3 w-full bg-white rounded-md">
-          {/* Profile Details here */}
-          <div className="w-full flex flex-col gap-4 mt-7">
-            <div className={`${rowStyle}`}>
-              <div className={`${rowItemStyle}`}>
-                <CustomInput
-                  label={"Company Name"}
-                  value={data?.companyName}
-                  onChangeValue={(value) => onChangeValue(value, "companyName")}
-                  disabled={!isEditing}
-                  icon={<FaBuilding className={`${iconStyle}`} />}
-                />
-              </div>
-
-              <div className={`${rowItemStyle}`}>
-                <CustomSelector
-                  label={"Company type"}
-                  options={companyTypes}
-                  value={data?.designation}
-                  icon={<FaNetworkWired className={`${iconStyle}`} />}
-                />
-              </div>
-            </div>
-            <div className={`${rowStyle}`}>
-              <div className={`${rowItemStyle} flex items-center justify-between`}>
-                <div className="w-[55%]">
-                  <CustomInput
-                    label={"Turnover"}
-                    value={data?.phone}
-                    onChangeValue={(value) => onChangeValue(value, "phone")}
-                    type="number"
-                    disabled={!isEditing}
-                    icon={<MdOutlineCurrencyRupee className={`${iconStyle}`} />}
-                  />
-                </div>
-                <div className="w-[42%]">
-                  <CustomSelector
-                    // label={""}
-                    options={values}
-                    value={data?.designation}
-                    icon={<FaNetworkWired className={`${iconStyle}`} />}
-                  />
-                </div>
-              </div>
-              <div className={`${rowItemStyle}`}>
-                <CustomInput
-                  label={"Address"}
-                  onChangeValue={(value) => onChangeValue(value, "altEmail")}
-                  value={userDetails?.altEmail}
-                  disabled={!isEditing}
-                  icon={<FaAddressCard className={`${iconStyle}`} />}
-                />
-              </div>
-            </div>
-            <div className={`${rowStyle}`}>
-              <div className={`${rowItemStyle}`}>
-                <CustomInput
-                  label={"Pincode"}
-                  value={data?.phone}
-                  onChangeValue={(value) => onChangeValue(value, "phone")}
-                  type="number"
-                  disabled={!isEditing}
-                  icon={<MdOutlinePersonPinCircle className={`${iconStyle}`} />}
-                />
-              </div>
-              <div className={`${rowItemStyle}`}>
-                <CustomInput
-                  label={"City"}
-                  value={userDetails?.city}
-                  onChangeValue={(value) => onChangeValue(value, "city")}
-                  icon={<FaCity className={`${iconStyle}`} />}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            <div className={`w-full flex justify-end mt-6`}>
-              {isEditing ? (
-                <button
-                  onClick={saveChanges}
-                  className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-blue-600 text-white hover:bg-blue-600/80 w-fit"
-                >
-                  <CiSaveUp2 />
-                  Save changes
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="px-2 md:px-3 flex items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-sm bg-colorPrimary text-white hover:bg-colorPrimary/80 w-fit"
-                >
-                  <MdOutlineEdit />
-                  Edit details
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};

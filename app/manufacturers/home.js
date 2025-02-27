@@ -172,15 +172,15 @@ const Home = () => {
               className="w-full flex overflow-auto"
             >
               <div
-                className={`bg-[#0000000d] ${
+                className={` bg-[#fffafa73] md:bg-[#0000000d]  z-[1] lg:z-0 ${
                   isSmallDevice
                     ? showSidebar
-                      ? "w-[250px] fixed top-0 left-0 backdrop-blur-md"
+                      ? "w-[250px] fixed top-0 left-0 backdrop-blur-lg"
                       : "w-[0px] fixed top-0 left-0"
                     : expanded
                     ? "w-[300px] sticky top-0"
                     : "w-[60px] sticky top-0"
-                }  flex items-center justify-center overflow-hidden transition-all z-40 h-full`}
+                }  flex items-center justify-center overflow-hidden transition-all h-full`}
               >
                 <button
                   className="lg:hidden absolute top-1 right-0 bg-colorPrimary rounded-l-md py-[2px] px-2 text-white flex items-center gap-1"
