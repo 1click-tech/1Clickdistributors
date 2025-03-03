@@ -18,7 +18,7 @@ const rowStyle = "w-full flex justify-between py-1 flex-col md:flex-row gap-4";
 const rowItemStyle = "w-full md:w-[46%]";
 const iconStyle = "text-[10px]";
 
-const BusinessProfile = () => {
+const BankDetails = () => {
   const { userDetails } = useContext(manufacturerContext);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -274,4 +274,4 @@ const BusinessProfile = () => {
   );
 };
 
-export default BusinessProfile;
+export default BankDetails;

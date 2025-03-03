@@ -1,5 +1,5 @@
 import manufacturerContext from "@/lib/context/manufacturerContext";
-import { vibrantColors } from "@/lib/data/commonData";
+import { dispositions, vibrantColors } from "@/lib/data/commonData";
 import React, { useContext, useEffect, useState } from "react";
 import { IoCallOutline } from "react-icons/io5";
 
@@ -15,7 +15,13 @@ import CustomSelector from "../uiCompoents/CustomSelector";
 import { FaNetworkWired } from "react-icons/fa6";
 import { CustomTextarea } from "../uiCompoents/CustomInput";
 import UpdatesList from "./UpdatesList";
-
+import { toast } from "react-toastify";
+import {
+  service_manufacturer_dispositions,
+  service_manufacturer_subDispositions,
+} from "../../lib/data/commonData";
+import { useQueryClient } from "@tanstack/react-query";
+import { formatValue } from "@/lib/commonFunctions";
 const LeadDetailView = ({
   isSmallDevice,
   jumpToPreviousLead,
@@ -61,8 +67,6 @@ const LeadDetailView = ({
     };
   }, [isSmallDevice]);
 
-  console.log("selectedLead is", selectedLead);
-
   const rowStyle =
     "w-full flex sm:justify-between gap-1 sm:gap-0 text-sm flex-col sm:flex-row";
   const boxStyle =
@@ -77,6 +81,7 @@ const LeadDetailView = ({
           <UpdateLeadModal
             updateLoading={updateLoading}
             setUpdateLoading={setUpdateLoading}
+            close={close}
           />
         </div>
       </AnimatedModal>
@@ -165,21 +170,21 @@ const LeadDetailView = ({
               <div className={`${boxStyle}`}>
                 <span className={`${keyStyle}`}>Profile Score:</span>
                 <span className={`${valueStyle}`}>
-                  {selectedLead?.profileScore}
+                  {selectedLead?.profileScore || "_"}
                 </span>
               </div>
             </div>
             <div className={`${rowStyle}`}>
               <div className={`${boxStyle}`}>
                 <span className={`${keyStyle}`}>Disposition:</span>
-                <span className={`${valueStyle}`}>
-                  {selectedLead?.disposition}
+                <span className={`${valueStyle} capitalize`}>
+                  {formatValue(selectedLead?.disposition)}
                 </span>
               </div>
               <div className={`${boxStyle}`}>
                 <span className={`${keyStyle}`}>Sub Disposition:</span>
-                <span className={`${valueStyle}`}>
-                  {selectedLead?.subDisposition}
+                <span className={`${valueStyle} capitalize`}>
+                  {formatValue(selectedLead?.subDisposition) || "_"}
                 </span>
               </div>
             </div>
@@ -203,38 +208,74 @@ const LeadDetailView = ({
 
 export default LeadDetailView;
 
-const UpdateLeadModal = ({ updateLoading, setUpdateLoading }) => {
+const UpdateLeadModal = ({ updateLoading, setUpdateLoading, close }) => {
   const { selectedLead } = useContext(manufacturerContext);
   const [selectedDisposition, setSelectedDisposition] = useState(null);
   const [remarks, setRemarks] = useState(null);
-
+  const dispositions = service_manufacturer_dispositions;
+  const subDispositions = service_manufacturer_subDispositions;
   const [selectedSubDisposition, setSelectedSubDisposition] = useState(null);
-
-  const dispositions = [
-    { label: "Followup", value: "followup" },
-    { label: "Deal", value: "deal" },
-    { label: "Non Contactable", value: "non_contactable" },
-    { label: "Not Interested", value: "not_interested" },
-  ];
-
-  const subDispositions = {
-    non_contactable: [
-      { label: "Ring", value: "ring" },
-      { label: "No response", value: "no_response" },
-      { label: "Switch off", value: "switch_off" },
-    ],
-    not_interested: [
-      { label: "Margin Issue", value: "margin_issue" },
-      { label: "Investment Issue", value: "investment_issue" },
-      { label: "other", value: "other" },
-    ],
-  };
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    console.log(selectedLead);
+    if (selectedLead) {
+      setSelectedDisposition(selectedLead?.disposition || null);
+      setSelectedSubDisposition(selectedLead?.subDisposition || null);
+    }
   }, [selectedLead]);
 
-  const update = () => {};
+  const update = async () => {
+    try {
+      if (subDispositions[selectedDisposition]?.length) {
+        if (!selectedSubDisposition) {
+          return toast.error("Please select sub disposition");
+        }
+
+        console.log(
+          "subDispositions[selectedDisposition]",
+          subDispositions[selectedDisposition]
+        );
+        let found = subDispositions[selectedDisposition]?.find(
+          (item) => item.value === selectedSubDisposition
+        );
+
+        console.log("found is", found);
+        if (!found || found == -1) {
+          return toast.error("Please select valid sub disposition");
+        }
+      }
+      setUpdateLoading(true);
+      const token = localStorage.getItem("authToken");
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/service/manufacturer/updateAllocatedLead`;
+      const body = {
+        disposition: selectedDisposition,
+        subDisposition: selectedSubDisposition || null,
+        remarks: remarks || "",
+        serviceDocId: selectedLead?.serviceDocId,
+      };
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "something went wrong");
+      } else {
+        toast.success(data.message || "Updated successfully");
+        queryClient.invalidateQueries(["allUpdatesOfUsers", "allocatedLeads"]);
+        close();
+      }
+    } catch (error) {
+      toast.error(error.message);
+      return null;
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   return (
     <div className="w-full h-full overflow-auto">
@@ -247,7 +288,9 @@ const UpdateLeadModal = ({ updateLoading, setUpdateLoading }) => {
           label={"Disposition"}
           options={dispositions}
           value={selectedDisposition}
-          onChangeValue={(e) => setSelectedDisposition(e)}
+          onChangeValue={(e) => {
+            setSelectedDisposition(e), setSelectedSubDisposition(null);
+          }}
           icon={<FaNetworkWired className={`text-base text-white`} />}
         />
 
@@ -273,8 +316,9 @@ const UpdateLeadModal = ({ updateLoading, setUpdateLoading }) => {
 
       <div className="flex justify-start gap-2 mt-3">
         <button
+          disabled={updateLoading}
           onClick={update}
-          className="text-white bg-colorPrimary py-1 px-3 rounded"
+          className="text-white bg-colorPrimary py-1 px-3 rounded disabled:bg-colorPrimary/50 disabled:animate-pulse"
         >
           Update now
         </button>

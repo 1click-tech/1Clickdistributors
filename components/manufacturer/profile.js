@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IoIosSave } from "react-icons/io";
 import TaxDetails from "./profileComponents/TaxDetails";
 import BankDetails from "./profileComponents/BankDetails";
-import BusinessProfile from "./profileComponents/BankDetails";
+import BusinessDetails from "./profileComponents/BusinessDetails";
 
 const rowStyle = "w-full flex justify-between py-1 flex-col md:flex-row gap-4";
 const rowItemStyle = "w-full md:w-[46%]";
@@ -243,7 +243,7 @@ const Profile = () => {
             </button>
           )}
         </div>
-        {showSections.includes("businessDetails") && <BusinessProfile />}
+        {showSections.includes("businessDetails") && <BusinessDetails />}
       </div>
 
       {/* Tax details */}

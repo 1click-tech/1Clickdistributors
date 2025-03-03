@@ -1,4 +1,3 @@
-// UpdatesData.js (remains the same)
 export const updates = [
   {
     disposition: "In Progress",
@@ -32,73 +31,130 @@ export const updates = [
   },
 ];
 
+import { convertFromTimeStamp, formatValue } from "@/lib/commonFunctions";
+import manufacturerContext from "@/lib/context/manufacturerContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import moment from "moment";
 // UpdatesList.jsx
-import React from "react";
+import React, { useContext, useState } from "react";
+import { toast } from "react-toastify";
 //   import { updates } from './UpdatesData';
 
-const UpdatesList = () => {
+const UpdatesList = ({}) => {
   // Colors for different dispositions
+  const { selectedLead, setSelectedLead } = useContext(manufacturerContext);
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
   const getStatusColor = (disposition) => {
     switch (disposition) {
-      case "In Progress":
+      case "non_contactable":
         return "from-blue-500 to-blue-600";
-      case "Completed":
+      case "deal":
         return "from-green-500 to-green-600";
-      case "Pending":
+      case "not_interested":
         return "from-yellow-500 to-yellow-600";
-      case "On Hold":
+      case "followup":
         return "from-red-500 to-red-600";
       default:
         return "from-gray-500 to-gray-600";
     }
   };
 
+  const getLeadUpdates = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("authToken");
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/service/manufacturer/getAllUpdatesOfLead`;
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceDocId: selectedLead?.serviceDocId,
+          readStatus: selectedLead?.readStatus || false,
+        }),
+      });
+      const data = await response.json();
+
+      if (data.increasedReadCount) {
+        queryClient.invalidateQueries(["allocatedLeads"]);
+      }
+      if (data.data) {
+        return data?.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      toast.error(error.message);
+      console.log("error in getting leadUpates", error.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const { data: allUpdates, refetch } = useQuery({
+    queryKey: ["allUpdatesOfUsers", selectedLead?.serviceDocId],
+    queryFn: getLeadUpdates,
+  });
+
+  if (!allUpdates || !allUpdates?.length || loading) {
+    return null;
+  }
+
   return (
     <div className="mx-auto mt-4 px-1 w-full">
-      <h2 className="text-xl font-bold text-gray-500 mb-4 bg-gradient-to-r from-gray-500 to-gray-700 bg-clip-text text-transparent ">
-        Project Updates
-      </h2>
-      <div className="space-y-6">
-        {updates.map((update, index) => (
-          <div
-            key={index}
-            className="relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group bg-gradient-to-r from-transparent to-gray-100"
-          >
-            {/* Left gradient bar */}
-            <div
-              className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b ${getStatusColor(
-                update.disposition
-              )}`}
-            ></div>
+      {Array.isArray(allUpdates) && allUpdates.length && (
+        <>
+          <h2 className="text-xl font-bold text-gray-500 mb-4 bg-gradient-to-r from-gray-500 to-gray-700 bg-clip-text text-transparent ">
+            Updates Timeline
+          </h2>
+          <button onClick={refetch}>Refetch</button>
+          <div className="space-y-6">
+            {allUpdates.map((update, index) => (
+              <div
+                key={index}
+                className="relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group bg-gradient-to-r from-transparent to-gray-100"
+              >
+                {/* Left gradient bar */}
+                <div
+                  className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b ${getStatusColor(
+                    update.disposition
+                  )}`}
+                ></div>
 
-            <div className="p-3 ml-2">
-              <div className="flex justify-between items-center mb-3">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors duration-300">
-                    {update.disposition}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {update.subDisposition}
+                <div className="p-3 ml-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-600 group-hover:text-indigo-600 transition-colors duration-300 capitalize">
+                        {formatValue(update.disposition)}
+                      </h3>
+                      {update.subDisposition && (
+                        <p className="text-sm text-gray-500 capitalize">
+                          {formatValue(update.subDisposition)}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors duration-300">
+                      {moment(convertFromTimeStamp(update.updatedAt)).format(
+                        "DD MMMM YYYY HH:mm"
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {update.remarks}
                   </p>
                 </div>
-                <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors duration-300">
-                  {new Date(update.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-              <p className="text-gray-700 text-base leading-relaxed">
-                {update.remark}
-              </p>
-            </div>
 
-            {/* Subtle hover overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-indigo-50 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                {/* Subtle hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-indigo-50 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 };

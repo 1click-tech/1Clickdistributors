@@ -28,7 +28,6 @@ const LeadsView = () => {
       }
     };
     check();
-
     window.addEventListener("resize", check);
     return () => {
       window.removeEventListener("resize", check);
@@ -51,6 +50,15 @@ const LeadsView = () => {
       const data = await response.json();
 
       if (data.data) {
+        if (selectedLead) {
+          let found = data.data.find(
+            (item) => item.leadId == selectedLead.leadId
+          );
+          if (found != -1) {
+            setSelectedLead(found);
+          }
+        }
+
         return data?.data;
       } else {
         return null;
@@ -69,9 +77,9 @@ const LeadsView = () => {
     queryFn: getLeads,
   });
 
-  useEffect(() => {
-    setLeads(data);
-  }, [data]);
+  // useEffect(() => {
+  //   setLeads(data);
+  // }, [data]);
 
   const jumpToPreviousLead = () => {
     let indexOfCurrentLead = leads?.findIndex(
@@ -119,11 +127,13 @@ const LeadsView = () => {
           selectedLead ? "md:w-[58%] xl:w-[63%]" : "w-0"
         }  h-full sticky top-0`}
       >
+        <button onClick={refetch}>refetch</button>
         {selectedLead && (
           <LeadDetailView
             isSmallDevice={isSmallDevice}
             jumpToPreviousLead={jumpToPreviousLead}
             jumpToNextLead={jumpToNextLead}
+            refetchAllLeads={refetch}
           />
         )}
       </div>
@@ -134,11 +144,13 @@ const LeadsView = () => {
 export default LeadsView;
 
 const ListView = ({ leads, setLeads, originalData }) => {
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [leadTypFilter, setLeadTypFilter] = useState("all");
   const { selectedLead, setSelectedLead } = useContext(manufacturerContext);
   const [showFilters, setShowFilters] = useState(false);
   const { open, close, modalOpen } = useModal();
   const [appliedFilters, setAppliedFilters] = useState({});
+
+  const [leadTypeCounts, setLeadTypeCounts] = useState({});
 
   let filters = [
     {
@@ -161,12 +173,13 @@ const ListView = ({ leads, setLeads, originalData }) => {
 
   const filterLeads = () => {
     try {
+      console.log("leadTypFilter is now", leadTypFilter);
       let keysToSearch = ["full_name", "phone_number", "leadId", "city"];
-
       // Start with the original data and filter it based on multiple conditions
       let filtered = originalData?.filter((lead, index) => {
         let searchTextPass = true; // Default to true to allow multiple conditions
         let cityCheckPass = true; // Default to true to allow multiple conditions
+        let leadTypeCheckPass = true; // Default to true to allow multiple conditions
 
         // Condition 1: Match `searchText`
         if (appliedFilters?.searchText && appliedFilters?.searchText !== "") {
@@ -178,7 +191,7 @@ const ListView = ({ leads, setLeads, originalData }) => {
           );
         }
 
-        // Condition 1: Match `City`
+        // Condition 2: Match `City`
 
         if (appliedFilters?.city?.length) {
           console.log(
@@ -188,7 +201,18 @@ const ListView = ({ leads, setLeads, originalData }) => {
           cityCheckPass = appliedFilters?.city?.includes(lead.city);
         }
 
-        let final = searchTextPass && cityCheckPass;
+        // condition 3: if leadTypFilter is applied
+        if (leadTypFilter == "read") {
+          leadTypeCheckPass = lead?.readStatus == "read";
+        } else if (leadTypFilter == "unread") {
+          console.log("i am in unread and status is", lead?.readStatus);
+          leadTypeCheckPass = !lead?.readStatus;
+        } else if (leadTypFilter == "archived") {
+          leadTypeCheckPass = lead?.archived == true;
+        }
+
+        console.log("leadTypeCheckPass", leadTypeCheckPass);
+        let final = searchTextPass && cityCheckPass && leadTypeCheckPass;
 
         // Return true only if all conditions pass
         return final || false;
@@ -200,10 +224,38 @@ const ListView = ({ leads, setLeads, originalData }) => {
   };
 
   useEffect(() => {
-    if (Object.keys(appliedFilters).length) {
-      filterLeads();
+    filterLeads();
+  }, [appliedFilters, leadTypFilter, originalData]);
+
+  const getLeadsTypeCount = (data) => {
+    let count = {
+      read: 0,
+      unread: 0,
+      archived: 0,
+      all: 0,
+    };
+
+    data.forEach((item) => {
+      count["all"]++;
+      if (item.readStatus == "read") {
+        count["read"]++;
+      } else {
+        count["unread"]++;
+      }
+
+      if (item.archived) {
+        count["archived"]++;
+      }
+
+      setLeadTypeCounts(count);
+    });
+  };
+
+  useEffect(() => {
+    if (originalData?.length) {
+      getLeadsTypeCount(originalData);
     }
-  }, [appliedFilters]);
+  }, [originalData]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -252,14 +304,14 @@ const ListView = ({ leads, setLeads, originalData }) => {
           {filters?.map((item) => {
             return (
               <button
-                onClick={() => setSelectedFilter(item.value)}
-                className={`px-4 py-1 text-xs border rounded ${
-                  selectedFilter == item.value
+                onClick={() => setLeadTypFilter(item.value)}
+                className={`px-4 flex py-1 text-xs border rounded ${
+                  leadTypFilter == item.value
                     ? "bg-colorPrimary text-white border-colorPrimary"
                     : "bg-transparent text-colorPrimary border-colorPrimary"
                 }`}
               >
-                {item.label}
+                {item.label} ({leadTypeCounts[item.value]})
               </button>
             );
           })}
@@ -267,51 +319,55 @@ const ListView = ({ leads, setLeads, originalData }) => {
       </div>
 
       <div className="flex flex-1 flex-col gap-2 mt-2 w-full overflow-auto py-2 px-3 bg-white rounded-md scrollbar-thin">
-        {leads.map((lead, index) => {
-          let selected = selectedLead?.leadId == lead.leadId;
-          return (
-            <div
-              onClick={() => setSelectedLead(lead)}
-              className={`w-full p-2 border  relative cursor-pointer hover:bg-gray-100/60 rounded-md ${
-                selected
-                  ? "border-colorPrimary"
-                  : "bg-transparent border-gray-400/60"
-              }`}
-            >
-              {selected && (
-                <span class="absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-b-[8px] border-l-[8px] border-l-colorPrimary border-t-transparent border-b-transparent"></span>
-              )}
+        {leads.length ? (
+          leads.map((lead, index) => {
+            let selected = selectedLead?.leadId == lead.leadId;
+            return (
+              <div
+                onClick={() => setSelectedLead(lead)}
+                className={`w-full p-2 border  relative cursor-pointer hover:bg-gray-100/60 rounded-md ${
+                  selected
+                    ? "border-colorPrimary"
+                    : "bg-transparent border-gray-400/60"
+                }`}
+              >
+                {selected && (
+                  <span class="absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-b-[8px] border-l-[8px] border-l-colorPrimary border-t-transparent border-b-transparent"></span>
+                )}
 
-              <div className="w-full flex items-center gap-2 px-2">
-                <div
-                  style={{
-                    background: vibrantColors[index % vibrantColors.length],
-                  }}
-                  className="h-[30px] w-[30px] rounded-full flex items-center justify-center text-white text-[20px]"
-                >
-                  {lead.full_name?.slice(0, 1)}
+                <div className="w-full flex items-center gap-2 px-2">
+                  <div
+                    style={{
+                      background: vibrantColors[index % vibrantColors.length],
+                    }}
+                    className="h-[30px] w-[30px] rounded-full flex items-center justify-center text-white text-[20px]"
+                  >
+                    {lead.full_name?.slice(0, 1)}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-[13px] leading-[15px] font-semibold text-gray-500">
+                      {lead?.full_name || "...."}
+                    </span>
+                    <span className="flex items-center gap-[1px] text-[11px] leading[12px] text-gray-500">
+                      <MdOutlineMailOutline />
+                      {lead?.email || "...."}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-col">
-                  <span className="text-[13px] leading-[15px] font-semibold text-gray-500">
-                    {lead?.full_name || "...."}
-                  </span>
-                  <span className="flex items-center gap-[1px] text-[11px] leading[12px] text-gray-500">
-                    <MdOutlineMailOutline />
-                    {lead?.email || "...."}
-                  </span>
+                <div className="w-full flex justify-start mt-2">
+                  <p className="text-gray-500 text-[12px] flex items-center gap-1">
+                    <CiLocationOn className="text-lg" />
+                    <span>{lead.city}, India</span>
+                  </p>
                 </div>
               </div>
-
-              <div className="w-full flex justify-start mt-2">
-                <p className="text-gray-500 text-[12px] flex items-center gap-1">
-                  <CiLocationOn className="text-lg" />
-                  <span>{lead.city}, India</span>
-                </p>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <h1 className="text-lg font-semibold text-gray-500 w-full text-center">No leads found</h1>
+        )}
       </div>
     </div>
   );
