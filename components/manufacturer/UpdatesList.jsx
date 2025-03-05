@@ -33,6 +33,7 @@ export const updates = [
 
 import { convertFromTimeStamp, formatValue } from "@/lib/commonFunctions";
 import manufacturerContext from "@/lib/context/manufacturerContext";
+import { serviceDispositionColors } from "@/lib/data/commonData";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 // UpdatesList.jsx
@@ -46,18 +47,9 @@ const UpdatesList = ({}) => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const getStatusColor = (disposition) => {
-    switch (disposition) {
-      case "non_contactable":
-        return "from-blue-500 to-blue-600";
-      case "deal":
-        return "from-green-500 to-green-600";
-      case "not_interested":
-        return "from-yellow-500 to-yellow-600";
-      case "followup":
-        return "from-red-500 to-red-600";
-      default:
-        return "from-gray-500 to-gray-600";
-    }
+    let color = serviceDispositionColors[disposition] || "gray";
+    console.log("coolor", color);
+    return color;
   };
 
   const getLeadUpdates = async () => {
@@ -111,7 +103,6 @@ const UpdatesList = ({}) => {
           <h2 className="text-xl font-bold text-gray-500 mb-4 bg-gradient-to-r from-gray-500 to-gray-700 bg-clip-text text-transparent ">
             Updates Timeline
           </h2>
-          <button onClick={refetch}>Refetch</button>
           <div className="space-y-6">
             {allUpdates.map((update, index) => (
               <div
@@ -120,9 +111,10 @@ const UpdatesList = ({}) => {
               >
                 {/* Left gradient bar */}
                 <div
-                  className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b ${getStatusColor(
-                    update.disposition
-                  )}`}
+                  style={{
+                    background: getStatusColor(update.disposition),
+                  }}
+                  className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b}`}
                 ></div>
 
                 <div className="p-3 ml-2">

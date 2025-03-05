@@ -267,8 +267,10 @@ const Home = () => {
                   {selectedPanel == "profile" && <Profile />}
                   {selectedPanel == "leads&Enquiries" && <LeadsView />}
                   {selectedPanel == "my_products" && <ProductsPage />}
-                  {selectedPanel == "deals" && <LeadsView />}
-                  {selectedPanel == "prospects" && <LeadsView />}
+                  {selectedPanel == "deals" && <LeadsView place={"deals"} />}
+                  {selectedPanel == "prospects" && (
+                    <LeadsView place="prospects" />
+                  )}
                 </div>
               </div>
             </div>

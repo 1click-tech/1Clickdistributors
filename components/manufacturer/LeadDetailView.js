@@ -1,13 +1,14 @@
 import manufacturerContext from "@/lib/context/manufacturerContext";
 import { dispositions, vibrantColors } from "@/lib/data/commonData";
 import React, { useContext, useEffect, useState } from "react";
-import { IoCallOutline } from "react-icons/io5";
+import { IoArchiveOutline, IoCallOutline } from "react-icons/io5";
 
 import {
   MdArrowBack,
   MdArrowForward,
   MdEdit,
   MdOutlineMailOutline,
+  MdOutlineUnarchive,
 } from "react-icons/md";
 import AnimatedModal from "../utills/AnimatedModal";
 import useModal from "../hooks/useModal";
@@ -22,6 +23,8 @@ import {
 } from "../../lib/data/commonData";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatValue } from "@/lib/commonFunctions";
+import Tooltip from "@mui/material/Tooltip";
+
 const LeadDetailView = ({
   isSmallDevice,
   jumpToPreviousLead,
@@ -30,6 +33,8 @@ const LeadDetailView = ({
   const { selectedLead, setSelectedLead } = useContext(manufacturerContext);
   const { open, close, modalOpen } = useModal();
   const [updateLoading, setUpdateLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   useEffect(() => {
     const handleBackButton = (event) => {
@@ -74,6 +79,37 @@ const LeadDetailView = ({
   const keyStyle = "w-auto font-semibold text-gray-600";
   const valueStyle = "flex-1 break-words text-gray-500";
 
+  const updateArchiveStatusOfLead = async (updateTo) => {
+    try {
+      console.log("selectedLead", selectedLead);
+      setArchiveLoading(true);
+      let token = localStorage.getItem("authToken");
+      let API_URL = `${process.env.NEXT_PUBLIC_BASEURL}/service/manufacturer/updateArchiveStatusOfLead`;
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceDocId: selectedLead?.serviceDocId,
+          archived: updateTo,
+        }),
+      });
+
+      let data = await response.json();
+      if (!data.success) {
+        return toast.error(data.message || "Something went wrong");
+      }
+      toast.success("Archive status udpated successfully");
+      queryClient.invalidateQueries(["allocatedLeads"]);
+    } catch (error) {
+      console.log("error in updateArchiveStatusOfLead", error.message);
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
+
   return (
     <div className="w-full h-full p-2 lg:pt-5">
       <AnimatedModal open={open} close={close} modalOpen={modalOpen}>
@@ -101,6 +137,28 @@ const LeadDetailView = ({
               >
                 Update Status
               </button>
+
+              {archiveLoading ? (
+                <img src="/loader.gif" className="h-4 w-4" />
+              ) : !selectedLead?.archived ? (
+                <Tooltip title="Archive" placement="top">
+                  <span>
+                    <IoArchiveOutline
+                      onClick={() => updateArchiveStatusOfLead(true)}
+                      className="text-xl text-white cursor-pointer"
+                    />
+                  </span>
+                </Tooltip>
+              ) : (
+                <Tooltip title="Unarchive" placement="top">
+                  <span>
+                    <MdOutlineUnarchive
+                      onClick={() => updateArchiveStatusOfLead(false)}
+                      className="text-xl text-white cursor-pointer"
+                    />
+                  </span>
+                </Tooltip>
+              )}
             </div>
 
             <div className="flex gap-2 items-center">

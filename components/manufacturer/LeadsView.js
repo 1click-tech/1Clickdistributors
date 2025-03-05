@@ -7,13 +7,19 @@ import manufacturerContext from "@/lib/context/manufacturerContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { CiLocationOn } from "react-icons/ci";
 import LeadDetailView from "./leadDetailView";
-import { vibrantColors } from "@/lib/data/commonData";
+import {
+  dispositions,
+  service_manufacturer_dispositions,
+  serviceDispositionColors,
+  vibrantColors,
+} from "@/lib/data/commonData";
 import { toast } from "react-toastify";
 import AnimatedModal from "../utills/AnimatedModal";
 import useModal from "../hooks/useModal";
 import { IoMdAdd } from "react-icons/io";
+import { formatValue } from "@/lib/commonFunctions";
 
-const LeadsView = () => {
+const LeadsView = ({ place }) => {
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState(null);
   const [isSmallDevice, setIsSmallDevice] = useState(false);
@@ -59,7 +65,13 @@ const LeadsView = () => {
           }
         }
 
-        return data?.data;
+        let filtered = data.data;
+        if (place == "prospects") {
+          filtered = filtered.filter((item) => item.disposition == "prospect");
+        } else if (place == "deals") {
+          filtered = filtered.filter((item) => item.disposition == "deal");
+        }
+        return filtered;
       } else {
         return null;
       }
@@ -73,13 +85,9 @@ const LeadsView = () => {
   };
 
   const { data, refetch } = useQuery({
-    queryKey: ["allocatedLeads"],
+    queryKey: ["allocatedLeads", place],
     queryFn: getLeads,
   });
-
-  // useEffect(() => {
-  //   setLeads(data);
-  // }, [data]);
 
   const jumpToPreviousLead = () => {
     let indexOfCurrentLead = leads?.findIndex(
@@ -127,7 +135,6 @@ const LeadsView = () => {
           selectedLead ? "md:w-[58%] xl:w-[63%]" : "w-0"
         }  h-full sticky top-0`}
       >
-        <button onClick={refetch}>refetch</button>
         {selectedLead && (
           <LeadDetailView
             isSmallDevice={isSmallDevice}
@@ -173,13 +180,13 @@ const ListView = ({ leads, setLeads, originalData }) => {
 
   const filterLeads = () => {
     try {
-      console.log("leadTypFilter is now", leadTypFilter);
       let keysToSearch = ["full_name", "phone_number", "leadId", "city"];
       // Start with the original data and filter it based on multiple conditions
       let filtered = originalData?.filter((lead, index) => {
         let searchTextPass = true; // Default to true to allow multiple conditions
         let cityCheckPass = true; // Default to true to allow multiple conditions
         let leadTypeCheckPass = true; // Default to true to allow multiple conditions
+        let dispositionsCheckPass = true; // Default to true to allow multiple conditions
 
         // Condition 1: Match `searchText`
         if (appliedFilters?.searchText && appliedFilters?.searchText !== "") {
@@ -192,13 +199,19 @@ const ListView = ({ leads, setLeads, originalData }) => {
         }
 
         // Condition 2: Match `City`
-
         if (appliedFilters?.city?.length) {
           console.log(
             "appliedFilters?.city?.includes(lead.city)",
             appliedFilters?.city?.includes(lead.city)
           );
           cityCheckPass = appliedFilters?.city?.includes(lead.city);
+        }
+
+        // Condition 2: Match `Dispositions`
+        if (appliedFilters?.dispositions?.length) {
+          dispositionsCheckPass = appliedFilters?.dispositions?.includes(
+            lead.disposition
+          );
         }
 
         // condition 3: if leadTypFilter is applied
@@ -211,8 +224,11 @@ const ListView = ({ leads, setLeads, originalData }) => {
           leadTypeCheckPass = lead?.archived == true;
         }
 
-        console.log("leadTypeCheckPass", leadTypeCheckPass);
-        let final = searchTextPass && cityCheckPass && leadTypeCheckPass;
+        let final =
+          searchTextPass &&
+          cityCheckPass &&
+          leadTypeCheckPass &&
+          dispositionsCheckPass;
 
         // Return true only if all conditions pass
         return final || false;
@@ -356,17 +372,37 @@ const ListView = ({ leads, setLeads, originalData }) => {
                   </div>
                 </div>
 
-                <div className="w-full flex justify-start mt-2">
+                <div className="w-full flex justify-start mt-2 gap-2">
                   <p className="text-gray-500 text-[12px] flex items-center gap-1">
                     <CiLocationOn className="text-lg" />
                     <span>{lead.city}, India</span>
                   </p>
+
+                  {lead?.disposition && (
+                    <span
+                      className="text-white py-[2px] px-3 rounded text-xs capitalize"
+                      style={{
+                        backgroundColor:
+                          serviceDispositionColors[lead.disposition || "gray"],
+                      }}
+                    >
+                      {formatValue(lead.disposition)}
+                    </span>
+                  )}
+
+                  {lead?.archived && (
+                    <span className="text-white py-[2px] px-3 rounded text-xs capitalize bg-red-500">
+                      Archived
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })
         ) : (
-          <h1 className="text-lg font-semibold text-gray-500 w-full text-center">No leads found</h1>
+          <h1 className="text-lg font-semibold text-gray-500 w-full text-center">
+            No leads found
+          </h1>
         )}
       </div>
     </div>
@@ -398,12 +434,10 @@ const Filters = ({
         cities[lead.city] = true;
         sources[lead.source] = true;
       });
-
       cities = Object.keys(cities || {})?.filter((item) => item && item != "");
       sources = Object.keys(sources || {})?.filter(
         (item) => item && item != ""
       );
-
       setContent({
         cities,
         sources,
@@ -444,6 +478,24 @@ const Filters = ({
       setFiltersCopy((pre) => ({
         ...pre,
         source: pre?.source?.filter((item) => item != e.target.value),
+      }));
+    }
+  };
+
+  const onChangeDispositions = (e) => {
+    if (!filtersCopy?.dispositions?.includes(e.target.value)) {
+      setFiltersCopy((pre) => ({
+        ...pre,
+        dispositions: pre.dispositions
+          ? [...pre.dispositions, e.target.value]
+          : [e.target.value],
+      }));
+    } else {
+      setFiltersCopy((pre) => ({
+        ...pre,
+        dispositions: dispositions?.source?.filter(
+          (item) => item != e.target.value
+        ),
       }));
     }
   };
@@ -503,6 +555,36 @@ const Filters = ({
                       className="h-4 w-4 p-1 rounded"
                     />
                     <span className="text-sm text-gray-500">{item}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* dispositions filter */}
+        <div className="w-full p-2 shadow-md rounded-md mt-2">
+          <div className="flex justify-between items-center">
+            <span className="text-base text-gray-600">Disposition</span>
+            <IoMdAdd
+              className="text-xl cursor-pointer"
+              onClick={() => onClickFilter("dispositions")}
+            />
+          </div>
+
+          {expanded?.includes("dispositions") && (
+            <div className="mt-2 flex flex-col gap-1">
+              {service_manufacturer_dispositions?.map((item) => {
+                return (
+                  <div className="flex gap-3 items-center">
+                    <input
+                      onChange={onChangeDispositions}
+                      value={item.value}
+                      checked={filtersCopy?.dispositions?.includes(item.value)}
+                      type="checkbox"
+                      className="h-4 w-4 p-1 rounded"
+                    />
+                    <span className="text-sm text-gray-500">{item.label}</span>
                   </div>
                 );
               })}
