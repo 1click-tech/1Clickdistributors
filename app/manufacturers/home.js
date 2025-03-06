@@ -163,7 +163,7 @@ const Home = () => {
             className={`flex flex-col items-center overflow-hidden bg-blue-100/40 w-full h-screen relative`}
             // className={`flex overflow-hidden relative pl-[45px] sm:pl-[75px] h-screen`}
           >
-            <div className="w-full h-[50px] bg-white shadow-md top-0">
+            <div className="w-full h-[50px] bg-white shadow-md top-0 flex items-center">
               <Header />
             </div>
 

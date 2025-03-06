@@ -216,12 +216,13 @@ const ListView = ({ leads, setLeads, originalData }) => {
 
         // condition 3: if leadTypFilter is applied
         if (leadTypFilter == "read") {
-          leadTypeCheckPass = lead?.readStatus == "read";
+          leadTypeCheckPass = lead?.readStatus == "read" && !lead?.archived;
         } else if (leadTypFilter == "unread") {
-          console.log("i am in unread and status is", lead?.readStatus);
-          leadTypeCheckPass = !lead?.readStatus;
+          leadTypeCheckPass = !lead?.readStatus && !lead?.archived;
         } else if (leadTypFilter == "archived") {
           leadTypeCheckPass = lead?.archived == true;
+        } else {
+          leadTypeCheckPass = !lead?.archived;
         }
 
         let final =

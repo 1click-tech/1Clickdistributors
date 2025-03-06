@@ -24,6 +24,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { formatValue } from "@/lib/commonFunctions";
 import Tooltip from "@mui/material/Tooltip";
+import Image from "next/image";
 
 const LeadDetailView = ({
   isSmallDevice,
@@ -110,8 +111,10 @@ const LeadDetailView = ({
     }
   };
 
+  const imageUrl =
+    "https://images.unsplash.com/photo-1543304216-b46be324b571?q=80&w=2181&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
   return (
-    <div className="w-full h-full p-2 lg:pt-5">
+    <div className="w-full h-full p-0 md:p-2 lg:pt-5">
       <AnimatedModal open={open} close={close} modalOpen={modalOpen}>
         <div className="min-w-[20vw] min-h-[50vh] bg-white rounded-md p-4">
           <UpdateLeadModal
@@ -167,13 +170,13 @@ const LeadDetailView = ({
                 className="w-fit px-3 py-1 text-white bg-transparent border border-white/70 rounded hover:bg-white/10 flex items-center gap-1"
               >
                 <MdArrowBack />
-                Previous
+                <span className="hidden md:block">Previous</span>
               </button>
               <button
                 onClick={jumpToNextLead}
                 className="w-fit px-3 py-1 text-white bg-transparent border border-white/70 rounded hover:bg-white/10 flex items-center gap-1"
               >
-                Next
+                <span className="hidden md:block">Next</span>
                 <MdArrowForward />
               </button>
             </div>
@@ -181,8 +184,8 @@ const LeadDetailView = ({
         </div>
 
         <div className="flex h-[90%] flex-1 w-full p-2 flex-col overflow-auto">
-          <div className="w-full flex justify-between mt-3">
-            <div className="w-[48%] h-[120px] rounded-md bg-gradient-to-r from-violet-500/20 to-blue-500/20">
+          <div className="w-full flex flex-col md:flex-row justify-between mt-3 gap-2 md:gap-0">
+            <div className="w-full md:w-[48%] h-[120px] rounded-md bg-gradient-to-r from-violet-500/20 to-blue-500/20">
               <div className="w-full py-2 px-4 flex flex-col justify-around h-full">
                 <div className="flex gap-3 detailsView items-center">
                   <div className="h-[45px] bg-blue-500 w-[45px] rounded-full flex items-center justify-center text-white text-[20px]">
@@ -214,7 +217,36 @@ const LeadDetailView = ({
               </div>
             </div>
 
-            <div className="w-[48%] h-[120px] rounded-md bg-gradient-to-r from-green-800/20 to-blue-800/20"></div>
+            <div className="relative w-full md:w-[48%] h-[120px] overflow-hidden rounded-md">
+              {/* Blurred Background */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundImage: `url(${imageUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "blur(8px)",
+                }}
+              ></div>
+              {/* Sharp Foreground Image */}
+              <Image
+                src={imageUrl}
+                alt="Foreground Image"
+                width={2181}
+                height={120}
+                style={{
+                  width: "100%",
+                  height: "120px",
+                  objectFit: "contain",
+                  position: "relative",
+                  zIndex: 10,
+                }}
+              />
+            </div>
           </div>
 
           <div className="mt-3 w-full flex flex-col gap-1">

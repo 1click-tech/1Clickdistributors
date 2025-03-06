@@ -298,7 +298,10 @@ const RoleTile = ({
     <div
       className={`flex flex-col justify-between border-2 border-slate-500 h-[5.5rem]
     rounded-md p-2 pb-0 cursor-pointer ${
-      assignToList?.hierarchy === role.id ? "bg-colorTransparent" : ""
+      assignToList?.hierarchy === role.id &&
+      assignToList?.department == role.department
+        ? "bg-colorTransparent"
+        : ""
     }`}
       onClick={handleAddToList}
     >

@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import CustomInput from "../uiCompoents/CustomInput";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
-import { MdEmail, MdKeyboardArrowUp } from "react-icons/md";
+import { MdEmail, MdKeyboardArrowUp, MdVpnKey } from "react-icons/md";
 import { FaCity, FaNetworkWired } from "react-icons/fa6";
 import { MdOutlineEdit } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
@@ -95,24 +95,36 @@ const Profile = () => {
         </h1>
         <div className="p-3 w-full bg-white rounded-md mt-1">
           {/* user small details */}
-          <div className="w-full flex gap-2">
-            <img
-              className="h-[70px] w-auto border border-blue-200 shadow-large rounded-full"
-              src={userDetails?.userImageLink}
-            />
+          <div className="w-full flex justify-between items-center">
+            <div className="flex gap-2 items-center">
+              <img
+                className="h-[70px] w-auto border border-blue-200 shadow-large rounded-full"
+                src={userDetails?.userImageLink}
+              />
 
-            <div className="flex flex-col gap-[2px]">
-              <span className="text-gray-500 font-semibold text-base">
-                {userDetails?.full_name}
-              </span>
-              <span className="text-sm text-orange-800 bg-orange-200/30 py-[1px] px-2 rounded-full w-fit">
-                Manufacturer
-              </span>
-              <span className="text-sm text-[#1b4c7d] rounded-full flex gap-1 items-center">
-                <CiLocationOn />
-                Noida, Uttar Pradesh
-              </span>
+              <div className="flex flex-col gap-[2px]">
+                <span className="text-gray-500 font-semibold text-base">
+                  {userDetails?.full_name}
+                </span>
+                <span className="text-sm text-orange-800 bg-orange-200/30 py-[1px] px-2 rounded-full w-fit">
+                  Manufacturer
+                </span>
+                <span className="text-sm text-[#1b4c7d] rounded-full flex gap-1 items-center">
+                  <CiLocationOn />
+                  {userDetails?.city}, {userDetails?.country}
+                </span>
+              </div>
             </div>
+
+            {/* <div className="flex gap-2 h-fit items-center">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="px-2 md:px-3 flex items-center h-fit w-fit gap-2 rounded py-1 text-xs sm:text-sm md:text-sm bg-blue-500 text-white hover:bg-blue-500/80"
+              >
+                <MdVpnKey />
+                Change Password
+              </button>
+            </div> */}
           </div>
 
           {/* Profile Details here */}
@@ -183,7 +195,7 @@ const Profile = () => {
             </div>
 
             <div className={`w-full flex justify-end mt-6 gap-3`}>
-              <button
+              {/* <button
                 onClick={() =>
                   queryClient.invalidateQueries(["currentUserDetail"])
                 }
@@ -191,7 +203,18 @@ const Profile = () => {
               >
                 <CiSaveUp2 />
                 refetchData
-              </button>
+              </button> */}
+              {isEditing && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                  }}
+                  disabled={loading}
+                  className="px-2 md:px-3 flex disabled:bg-gray-300 disabled:animate-pulse items-center gap-2 rounded py-1 text-xs sm:text-sm md:text-base bg-gray-600 text-white hover:bg-gray-600/80 w-fit"
+                >
+                  Cancel
+                </button>
+              )}
               {isEditing ? (
                 <button
                   onClick={saveChanges}

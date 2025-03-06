@@ -203,16 +203,126 @@ export const EditProduct = ({ data, close }) => {
   const simpleFieldsWithNum = ["FSSAI_Lic_No", "MRP", "quantityOrSize"];
   const selectors = {
     category: [
-      { label: "Fitness", value: "fitness" },
-      { label: "Electronics", value: "electronics" },
-      { label: "Fashion", value: "fashion" },
-      { label: "Home & Kitchen", value: "home_kitchen" },
-      { label: "Beauty & Personal Care", value: "beauty_personal_care" },
-      { label: "Sports & Outdoors", value: "sports_outdoors" },
-      { label: "Automotive", value: "automotive" },
-      { label: "Toys & Games", value: "toys_games" },
-      { label: "Books & Stationery", value: "books_stationery" },
-      { label: "Health & Wellness", value: "health_wellness" },
+      {
+        label: "Fitness",
+        value: "fitness",
+        subCategory: [
+          { label: "Gym Equipment", value: "gym_equipment" },
+          { label: "Yoga Mats", value: "yoga_mats" },
+          { label: "Dumbbells", value: "dumbbells" },
+          { label: "Supplements", value: "supplements" },
+          { label: "Wearables", value: "wearables" },
+          { label: "Others", value: "fitness_others" },
+        ],
+      },
+      {
+        label: "Electronics",
+        value: "electronics",
+        subCategory: [
+          { label: "Mobile Phones", value: "mobile_phones" },
+          { label: "Laptops", value: "laptops" },
+          { label: "Headphones", value: "headphones" },
+          { label: "Smartwatches", value: "smartwatches" },
+          { label: "Gaming Consoles", value: "gaming_consoles" },
+          { label: "Others", value: "electronics_others" },
+        ],
+      },
+      {
+        label: "Fashion",
+        value: "fashion",
+        subCategory: [
+          { label: "Men's Clothing", value: "mens_clothing" },
+          { label: "Women's Clothing", value: "womens_clothing" },
+          { label: "Footwear", value: "footwear" },
+          { label: "Accessories", value: "accessories" },
+          { label: "Jewelry", value: "jewelry" },
+          { label: "Others", value: "fashion_others" },
+        ],
+      },
+      {
+        label: "Home & Kitchen",
+        value: "home_kitchen",
+        subCategory: [
+          { label: "Furniture", value: "furniture" },
+          { label: "Kitchen Appliances", value: "kitchen_appliances" },
+          { label: "Cookware", value: "cookware" },
+          { label: "Home Decor", value: "home_decor" },
+          { label: "Storage & Organization", value: "storage_organization" },
+          { label: "Others", value: "home_kitchen_others" },
+        ],
+      },
+      {
+        label: "Beauty & Personal Care",
+        value: "beauty_personal_care",
+        subCategory: [
+          { label: "Skincare", value: "skincare" },
+          { label: "Haircare", value: "haircare" },
+          { label: "Makeup", value: "makeup" },
+          { label: "Fragrances", value: "fragrances" },
+          { label: "Grooming Essentials", value: "grooming_essentials" },
+          { label: "Others", value: "beauty_personal_care_others" },
+        ],
+      },
+      {
+        label: "Sports & Outdoors",
+        value: "sports_outdoors",
+        subCategory: [
+          { label: "Camping & Hiking", value: "camping_hiking" },
+          { label: "Cycling", value: "cycling" },
+          { label: "Team Sports", value: "team_sports" },
+          { label: "Water Sports", value: "water_sports" },
+          { label: "Outdoor Gear", value: "outdoor_gear" },
+          { label: "Others", value: "sports_outdoors_others" },
+        ],
+      },
+      {
+        label: "Automotive",
+        value: "automotive",
+        subCategory: [
+          { label: "Car Accessories", value: "car_accessories" },
+          { label: "Bike Accessories", value: "bike_accessories" },
+          { label: "Car Maintenance", value: "car_maintenance" },
+          { label: "Motorcycle Gear", value: "motorcycle_gear" },
+          { label: "Tires & Wheels", value: "tires_wheels" },
+          { label: "Others", value: "automotive_others" },
+        ],
+      },
+      {
+        label: "Toys & Games",
+        value: "toys_games",
+        subCategory: [
+          { label: "Board Games", value: "board_games" },
+          { label: "Action Figures", value: "action_figures" },
+          { label: "Educational Toys", value: "educational_toys" },
+          { label: "Dolls & Plush Toys", value: "dolls_plush_toys" },
+          { label: "Outdoor Play", value: "outdoor_play" },
+          { label: "Others", value: "toys_games_others" },
+        ],
+      },
+      {
+        label: "Books & Stationery",
+        value: "books_stationery",
+        subCategory: [
+          { label: "Fiction", value: "fiction" },
+          { label: "Non-Fiction", value: "non_fiction" },
+          { label: "Educational Books", value: "educational_books" },
+          { label: "Notebooks & Journals", value: "notebooks_journals" },
+          { label: "Art Supplies", value: "art_supplies" },
+          { label: "Others", value: "books_stationery_others" },
+        ],
+      },
+      {
+        label: "Health & Wellness",
+        value: "health_wellness",
+        subCategory: [
+          { label: "Vitamins & Supplements", value: "vitamins_supplements" },
+          { label: "Medical Equipment", value: "medical_equipment" },
+          { label: "Mental Wellness", value: "mental_wellness" },
+          { label: "Pain Relief", value: "pain_relief" },
+          { label: "Weight Management", value: "weight_management" },
+          { label: "Others", value: "health_wellness_others" },
+        ],
+      },
     ],
     subCategory: [
       { label: "Gym Equipment", value: "gym_equipment" },
@@ -345,6 +455,17 @@ export const EditProduct = ({ data, close }) => {
       setUploading(false);
     }
   };
+
+  const getSubCategories = () => {
+    if (!product.category) {
+      return [];
+    }
+    let category = selectors?.category?.find(
+      (item) => item.value == product.category
+    );
+
+    return category?.subCategory;
+  };
   return (
     <div className="w-full h-full flex flex-col">
       <div className="h-[90%] w-full overflow-auto mt-2 py-2 px-3">
@@ -396,7 +517,13 @@ export const EditProduct = ({ data, close }) => {
               <div className={`${rowItemStyle} my-2 pt-3`}>
                 <CustomSelector
                   label={productFieldNames[key] || key}
-                  options={selectors[key]}
+                  options={
+                    key == "subCategory"
+                      ? product?.category
+                        ? getSubCategories()
+                        : []
+                      : selectors[key]
+                  }
                   value={product[key]}
                   onChangeValue={(value) => onChangeValue(value, key)}
                   icon={getIcon(key)}
