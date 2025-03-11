@@ -14,6 +14,9 @@ const index = () => {
   const [executiveWiseRecord, setExecutiveWiseRecord] = useState(null);
   const [selectedMember, setSelectedMember] = useState("");
   const [memberId, setMemberId] = useState("");
+  const [popupLeads, setPopupLeads] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
 
   const currentLoggedInUser = useSelector(authSelector);
 
@@ -28,7 +31,6 @@ const index = () => {
     });
   }, []);
 
-  // get roles of the user
   const getUserDataForDashboard = async () => {
     try {
       if (!date) return null;
@@ -62,29 +64,24 @@ const index = () => {
     }
   };
 
-  // Fetch user roles using react-query
   const { data } = useQuery({
     queryKey: ["userUpdateData", date, memberId],
     queryFn: getUserDataForDashboard,
   });
 
-  // Process the fetched data
   useEffect(() => {
     if (Array.isArray(data?.leads) && data.leads.length > 0) {
       const dispositionCounts = {};
       const formattedData = {};
       const membersData = data.membersData;
 
-      // Aggregate dispositions per sales executive
       data.leads.forEach((lead) => {
         if (lead.disposition) {
-          // Overall disposition counts
           dispositionCounts[lead.disposition] =
             (dispositionCounts[lead.disposition] || 0) + 1;
 
           const { salesExecutiveName, disposition } = lead;
 
-          // Initialize sales executive data if not present
           if (!formattedData[salesExecutiveName]) {
             formattedData[salesExecutiveName] = {
               salesExecutiveName,
@@ -92,45 +89,36 @@ const index = () => {
             };
           }
 
-          // Increment total updates and specific disposition
           formattedData[salesExecutiveName].totalUpdates += 1;
           formattedData[salesExecutiveName][disposition] =
             (formattedData[salesExecutiveName][disposition] || 0) + 1;
         }
       });
 
-      // Aggregate dispositions for managers by adding their executives' data
       Object.keys(formattedData).forEach((memberName) => {
         const member = membersData.find((m) => m.name === memberName);
         if (member?.hierarchy === "manager") {
-          // Find all executives under this manager
           const managerExecutives = membersData.filter(
             (m) => m.senior === member.id
           );
           const managerData = formattedData[memberName];
 
-          // Initialize manager's dispositions if not present
           const aggregatedDispositions = { ...managerData };
 
           managerExecutives.forEach((executive) => {
             const executiveData = formattedData[executive.name];
             if (executiveData) {
-              // Iterate over each key in executiveData
               Object.keys(executiveData).forEach((key) => {
                 if (key === "salesExecutiveName" || key === "totalUpdates") {
-                  // Skip non-disposition keys
                   return;
                 }
-                // Add executive's disposition count to manager's dispositions
                 aggregatedDispositions[key] =
                   (aggregatedDispositions[key] || 0) + executiveData[key];
               });
-              // Add executive's total updates to manager's total updates
               aggregatedDispositions.totalUpdates += executiveData.totalUpdates;
             }
           });
 
-          // Update the manager's data in formattedData
           formattedData[memberName] = aggregatedDispositions;
         }
       });
@@ -143,14 +131,45 @@ const index = () => {
     }
   }, [data?.leads, data?.membersData]);
 
-  // const userData = {
-  //   NI: 10,
-  //   "Deal done": 3,
-  //   Presentation: 10,
-  //   "Presentation followup": 12,
-  //   "Call back": 16,
-  //   Prospect: 8,
-  // };
+  const getAllExecutiveNames = (memberName) => {
+    const member = data?.membersData.find((m) => m.name === memberName);
+    if (!member) return [memberName];
+
+    if (member.hierarchy === "executive") {
+      return [memberName];
+    } else if (member.hierarchy === "manager") {
+      const executives = data.membersData.filter(
+        (m) => m.senior === member.id
+      );
+      const executiveNames = executives.map((e) => e.name);
+      return [memberName, ...executiveNames];
+    }
+    return [memberName];
+  };
+
+  const handleCellClick = (salesExecutiveName, type) => {
+    if (!data || !data.leads) return;
+
+    const allNames = getAllExecutiveNames(salesExecutiveName);
+    let filteredLeads;
+
+    if (type === "totalUpdates") {
+      filteredLeads = data.leads.filter((lead) =>
+        allNames.includes(lead.salesExecutiveName)
+      );
+      setPopupTitle(`Total Updates for ${salesExecutiveName}`);
+    } else {
+      filteredLeads = data.leads.filter(
+        (lead) =>
+          allNames.includes(lead.salesExecutiveName) &&
+          lead.disposition === type
+      );
+      setPopupTitle(`${type} for ${salesExecutiveName}`);
+    }
+
+    setPopupLeads(filteredLeads);
+    setShowPopup(true);
+  };
 
   const handleSetDate = () => {
     setDate({
@@ -250,14 +269,34 @@ const index = () => {
                         {salesExecutive.salesExecutiveName}
                       </td>
                       <td className="border border-gray-300 px-4 py-2">
-                        {salesExecutive.totalUpdates}
+                        <span
+                          className="cursor-pointer text-blue-500 hover:underline"
+                          onClick={() =>
+                            handleCellClick(
+                              salesExecutive.salesExecutiveName,
+                              "totalUpdates"
+                            )
+                          }
+                        >
+                          {salesExecutive.totalUpdates}
+                        </span>
                       </td>
                       {Object.keys(userData).map((disposition) => (
                         <td
                           key={disposition}
                           className="border border-gray-300 px-4 py-2"
                         >
-                          {salesExecutive[disposition] || 0}
+                          <span
+                            className="cursor-pointer text-blue-500 hover:underline"
+                            onClick={() =>
+                              handleCellClick(
+                                salesExecutive.salesExecutiveName,
+                                disposition
+                              )
+                            }
+                          >
+                            {salesExecutive[disposition] || 0}
+                          </span>
                         </td>
                       ))}
                     </tr>
@@ -265,6 +304,76 @@ const index = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-5 rounded-md w-[80%] max-h-[80%] overflow-auto">
+            <h2 className="text-xl font-bold mb-4">{popupTitle}</h2>
+            <table className="min-w-full bg-white border-collapse border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Lead Name
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Sales Executive
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Disposition
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                   followup Date
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                   Company Name
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                   Phone Number
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                   Company Email
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {popupLeads.map((lead, index) => (
+                  <tr key={index} className="bg-white even:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.full_name}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.salesExecutiveName}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.disposition}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                         {lead.followUpDate && moment(lead.followUpDate).isValid()
+                         ? moment(lead.followUpDate).format("YYYY-MM-DD")
+                          : "-"}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.company_name}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.phone_number}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.email}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+              onClick={() => setShowPopup(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
