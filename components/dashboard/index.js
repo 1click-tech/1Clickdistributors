@@ -308,25 +308,34 @@ const index = () => {
         </div>
       )}
 
-      {showPopup && (
+      {/* {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-5 rounded-md w-[80%] max-h-[80%] overflow-auto">
             <h2 className="text-xl font-bold mb-4">{popupTitle}</h2>
             <table className="min-w-full bg-white border-collapse border border-gray-300">
               <thead>
                 <tr>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
-                    Lead Name
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                <th className="border border-gray-300 px-4 py-2 text-left">
                     Sales Executive
+                  </th>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                    Profile Id
+                  </th>
+
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                   Next Followup Date
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left">
                     Disposition
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left">
-                   followup Date
+                    Last Remarks
                   </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Lead Name
+                  </th>
+ 
+
                   <th className="border border-gray-300 px-4 py-2 text-left">
                    Company Name
                   </th>
@@ -334,27 +343,37 @@ const index = () => {
                    Phone Number
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left">
-                   Company Email
+                   Mail Id
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {popupLeads.map((lead, index) => (
                   <tr key={index} className="bg-white even:bg-gray-100">
-                    <td className="border border-gray-300 px-4 py-2">
-                      {lead.full_name}
-                    </td>
+
                     <td className="border border-gray-300 px-4 py-2">
                       {lead.salesExecutiveName}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {lead.disposition}
+                      {lead.profileId}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                          {lead.followUpDate && moment(lead.followUpDate).isValid()
                          ? moment(lead.followUpDate).format("YYYY-MM-DD")
                           : "-"}
                     </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.disposition}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.remarks}
+                    </td>
+
+                    <td className="border border-gray-300 px-4 py-2">
+                      {lead.full_name}
+                    </td>
+     
+
                     <td className="border border-gray-300 px-4 py-2">
                       {lead.company_name}
                     </td>
@@ -364,6 +383,8 @@ const index = () => {
                     <td className="border border-gray-300 px-4 py-2">
                       {lead.email}
                     </td>
+
+                 
                   </tr>
                 ))}
               </tbody>
@@ -376,8 +397,90 @@ const index = () => {
             </button>
           </div>
         </div>
-      )}
+      )} */}
+
+{showPopup && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="relative bg-white p-5 rounded-md w-[80%] max-h-[80%] overflow-auto">
+      <button
+        className="absolute top-2 right-2 bg-red-500 text-white px-4 py-2 rounded"
+        onClick={() => setShowPopup(false)}
+      >
+        Close
+      </button>
+
+      <h2 className="text-xl font-bold mb-4">{popupTitle}</h2>
+
+      {/* Scrollable Table Container */}
+      <div className="max-h-[70vh] overflow-y-auto">
+        <table className="min-w-full bg-white border-collapse border border-gray-300">
+        {/* <thead className="sticky top-0 bg-gray-100 z-10">
+            <tr>
+              <th className="border border-gray-300 px-4 py-2 text-left">Sales Executive</th>
+              <th className="border border-gray-300 px-2 py-1 text-sm w-[80px]">Profile Id</th>
+              <th className="border border-gray-300 px-6 py-4 text-left">Next Followup Date</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Disposition</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Last Remarks</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Lead Name</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Company Name</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Phone Number</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Mail Id</th>
+            </tr>
+          </thead> */}
+
+          <thead className="sticky top-0 bg-gray-100 z-10">
+  <tr>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[100px]">Sales Executive</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[80px]">Profile Id</th>
+    {/* <th className="border border-gray-300 px-2 py-1 text-sm w-[100px]">Next Followup Date</th> */}
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Next Followup Date</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[100px]">Disposition</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[150px]">Last Remarks</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[150px]">Lead Name</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Company Name</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[120px]">Phone Number</th>
+    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Mail Id</th>
+  </tr>
+</thead>
+
+          <tbody>
+            {popupLeads.map((lead, index) => (
+              <tr key={index} className="bg-white even:bg-gray-100">
+                <td className="border border-gray-300 px-4 py-2">{lead.salesExecutiveName}</td>
+                <td className="border border-gray-300 px-4 py-2">{lead.profileId}</td>
+                <td className="border border-gray-300 px-2 py-1">
+                  {lead.followUpDate && moment(lead.followUpDate).isValid()
+                    ? moment(lead.followUpDate).format("YYYY-MM-DD")
+                    : "-"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">{lead.disposition}</td>
+                {/* <td className="border border-gray-300 px-4 py-2">{lead.remarks}</td> */}
+                <td className="border border-gray-300 px-4 py-2 relative group max-w-[200px] cursor-pointer">
+  <div className="truncate">{lead.remarks}</div>
+
+  {/* Hover Box */}
+  <div className="absolute top-0 left-0 bg-white shadow-lg border border-gray-300 p-3 rounded-md w-[250px] max-w-xs hidden group-hover:block z-10">
+    {lead.remarks}
+  </div>
+</td>
+          <td className="border border-gray-300 px-4 py-2">{lead.full_name}</td>
+                <td className="border border-gray-300 px-4 py-2">{lead.company_name}</td>
+                <td className="border border-gray-300 px-4 py-2">{lead.phone_number}</td>
+                <td className="border border-gray-300 px-4 py-2">{lead.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
+)}
+
+
+
+
+
+  </div>
   );
 };
 
