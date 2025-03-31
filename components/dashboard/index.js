@@ -14,6 +14,10 @@ const index = () => {
   const [executiveWiseRecord, setExecutiveWiseRecord] = useState(null);
   const [selectedMember, setSelectedMember] = useState("");
   const [memberId, setMemberId] = useState("");
+  const [popupLeads, setPopupLeads] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [selectedLead, setSelectedLead] = useState(null); // Moved to top
 
   const currentLoggedInUser = useSelector(authSelector);
 
@@ -28,7 +32,6 @@ const index = () => {
     });
   }, []);
 
-  // get roles of the user
   const getUserDataForDashboard = async () => {
     try {
       if (!date) return null;
@@ -62,29 +65,24 @@ const index = () => {
     }
   };
 
-  // Fetch user roles using react-query
   const { data } = useQuery({
     queryKey: ["userUpdateData", date, memberId],
     queryFn: getUserDataForDashboard,
   });
 
-  // Process the fetched data
   useEffect(() => {
     if (Array.isArray(data?.leads) && data.leads.length > 0) {
       const dispositionCounts = {};
       const formattedData = {};
       const membersData = data.membersData;
 
-      // Aggregate dispositions per sales executive
       data.leads.forEach((lead) => {
         if (lead.disposition) {
-          // Overall disposition counts
           dispositionCounts[lead.disposition] =
             (dispositionCounts[lead.disposition] || 0) + 1;
 
           const { salesExecutiveName, disposition } = lead;
 
-          // Initialize sales executive data if not present
           if (!formattedData[salesExecutiveName]) {
             formattedData[salesExecutiveName] = {
               salesExecutiveName,
@@ -92,45 +90,36 @@ const index = () => {
             };
           }
 
-          // Increment total updates and specific disposition
           formattedData[salesExecutiveName].totalUpdates += 1;
           formattedData[salesExecutiveName][disposition] =
             (formattedData[salesExecutiveName][disposition] || 0) + 1;
         }
       });
 
-      // Aggregate dispositions for managers by adding their executives' data
       Object.keys(formattedData).forEach((memberName) => {
         const member = membersData.find((m) => m.name === memberName);
         if (member?.hierarchy === "manager") {
-          // Find all executives under this manager
           const managerExecutives = membersData.filter(
             (m) => m.senior === member.id
           );
           const managerData = formattedData[memberName];
 
-          // Initialize manager's dispositions if not present
           const aggregatedDispositions = { ...managerData };
 
           managerExecutives.forEach((executive) => {
             const executiveData = formattedData[executive.name];
             if (executiveData) {
-              // Iterate over each key in executiveData
               Object.keys(executiveData).forEach((key) => {
                 if (key === "salesExecutiveName" || key === "totalUpdates") {
-                  // Skip non-disposition keys
                   return;
                 }
-                // Add executive's disposition count to manager's dispositions
                 aggregatedDispositions[key] =
                   (aggregatedDispositions[key] || 0) + executiveData[key];
               });
-              // Add executive's total updates to manager's total updates
               aggregatedDispositions.totalUpdates += executiveData.totalUpdates;
             }
           });
 
-          // Update the manager's data in formattedData
           formattedData[memberName] = aggregatedDispositions;
         }
       });
@@ -143,14 +132,45 @@ const index = () => {
     }
   }, [data?.leads, data?.membersData]);
 
-  // const userData = {
-  //   NI: 10,
-  //   "Deal done": 3,
-  //   Presentation: 10,
-  //   "Presentation followup": 12,
-  //   "Call back": 16,
-  //   Prospect: 8,
-  // };
+  const getAllExecutiveNames = (memberName) => {
+    const member = data?.membersData.find((m) => m.name === memberName);
+    if (!member) return [memberName];
+
+    if (member.hierarchy === "executive") {
+      return [memberName];
+    } else if (member.hierarchy === "manager") {
+      const executives = data.membersData.filter(
+        (m) => m.senior === member.id
+      );
+      const executiveNames = executives.map((e) => e.name);
+      return [memberName, ...executiveNames];
+    }
+    return [memberName];
+  };
+
+  const handleCellClick = (salesExecutiveName, type) => {
+    if (!data || !data.leads) return;
+
+    const allNames = getAllExecutiveNames(salesExecutiveName);
+    let filteredLeads;
+
+    if (type === "totalUpdates") {
+      filteredLeads = data.leads.filter((lead) =>
+        allNames.includes(lead.salesExecutiveName)
+      );
+      setPopupTitle(`Total Updates for ${salesExecutiveName}`);
+    } else {
+      filteredLeads = data.leads.filter(
+        (lead) =>
+          allNames.includes(lead.salesExecutiveName) &&
+          lead.disposition === type
+      );
+      setPopupTitle(`${type} for ${salesExecutiveName}`);
+    }
+
+    setPopupLeads(filteredLeads);
+    setShowPopup(true);
+  };
 
   const handleSetDate = () => {
     setDate({
@@ -243,31 +263,185 @@ const index = () => {
                 </tr>
               </thead>
               <tbody>
-                {Object.values(executiveWiseRecord).map(
-                  (salesExecutive, index) => (
-                    <tr key={index} className="bg-white even:bg-gray-100">
-                      <td className="border border-gray-300 px-4 py-2">
-                        {salesExecutive.salesExecutiveName}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
+                {Object.values(executiveWiseRecord).map((salesExecutive, index) => (
+                  <tr key={index} className="bg-white even:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2">
+                      {salesExecutive.salesExecutiveName}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span
+                        className="cursor-pointer text-blue-500 hover:underline"
+                        onClick={() =>
+                          handleCellClick(
+                            salesExecutive.salesExecutiveName,
+                            "totalUpdates"
+                          )
+                        }
+                      >
                         {salesExecutive.totalUpdates}
-                      </td>
-                      {Object.keys(userData).map((disposition) => (
-                        <td
-                          key={disposition}
-                          className="border border-gray-300 px-4 py-2"
+                      </span>
+                    </td>
+                    {Object.keys(userData).map((disposition) => (
+                      <td
+                        key={disposition}
+                        className="border border-gray-300 px-4 py-2"
+                      >
+                        <span
+                          className="cursor-pointer text-blue-500 hover:underline"
+                          onClick={() =>
+                            handleCellClick(
+                              salesExecutive.salesExecutiveName,
+                              disposition
+                            )
+                          }
                         >
                           {salesExecutive[disposition] || 0}
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                )}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="relative bg-white p-5 rounded-md w-[80%] max-h-[80%] overflow-auto">
+            <button
+              className="absolute top-2 right-2 bg-red-500 text-white px-4 py-2 rounded"
+              onClick={() => setShowPopup(false)}
+            >
+              Close
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">{popupTitle}</h2>
+
+            <div className="max-h-[70vh] overflow-y-auto">
+              <table className="min-w-full bg-white border-collapse border border-gray-300">
+                <thead className="sticky top-0 bg-gray-100 z-10">
+                  <tr>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[100px]">Sales Executive</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[80px]">Profile Id</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Next Followup Date</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[100px]">Disposition</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[150px]">Last Remarks</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[150px]">Lead Name</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Company Name</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[120px]">Phone Number</th>
+                    <th className="border border-gray-300 px-2 py-1 text-sm w-[180px]">Mail Id</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupLeads.map((lead, index) => (
+                    <tr key={index} className="bg-white even:bg-gray-100">
+                      <td className="border border-gray-300 px-4 py-2">{lead.salesExecutiveName}</td>
+                      <td
+                        className="border border-gray-300 px-4 py-2 text-blue-500 cursor-pointer underline"
+                        onClick={() => lead && setSelectedLead(lead)}
+                      >
+                        {lead.profileId}
+                      </td>
+                      <td className="border border-gray-300 px-2 py-1">
+                        {lead.followUpDate && moment(lead.followUpDate).isValid()
+                          ? moment(lead.followUpDate).format("YYYY-MM-DD")
+                          : "-"}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">{lead.disposition}</td>
+                      <td className="border border-gray-300 px-4 py-2 relative group max-w-[200px] cursor-pointer">
+                        <div className="truncate">{lead.remarks}</div>
+                        <div className="absolute top-0 left-0 bg-white shadow-lg border border-gray-300 p-3 rounded-md w-[250px] max-w-xs hidden group-hover:block z-10">
+                          {lead.remarks}
+                        </div>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">{lead.full_name}</td>
+                      <td className="border border-gray-300 px-4 py-2">{lead.company_name}</td>
+                      <td className="border border-gray-300 px-4 py-2">{lead.phone_number}</td>
+                      <td className="border border-gray-300 px-4 py-2">{lead.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+{selectedLead && (
+  <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 transition-opacity duration-300">
+    <div className="relative bg-white p-6 rounded-lg w-[50%] max-h-[85vh] overflow-y-auto shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+      {/* Close Button */}
+      <button
+        className="absolute top-3 right-3 bg-red-500 text-white px-4 py-2"
+        onClick={() => setSelectedLead(null)}
+      >
+        Close
+      </button>
+
+      {/* Header */}
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Profile Details - {selectedLead.profileId}</h2>
+
+      {/* Lead Details */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Full Name:</strong> {selectedLead.full_name}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Company Name:</strong> {selectedLead.company_name}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Phone Number:</strong> {selectedLead.phone_number}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Email:</strong> {selectedLead.email}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">City:</strong> {selectedLead.city}</p>
+        </div>
+        <div className="space-y-2">
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Sales Executive:</strong> {selectedLead.salesExecutiveName}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Disposition:</strong> {selectedLead.disposition}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Sub-Disposition:</strong> {selectedLead.subDisposition}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Last Remarks:</strong> {selectedLead.remarks}</p>
+          <p className="text-gray-700"><strong className="font-semibold text-gray-900">Follow-Up Date:</strong> {selectedLead.followUpDate ? moment.unix(selectedLead.followUpDate._seconds).format("YYYY-MM-DD HH:mm") : "N/A"}</p>
+        </div>
+      </div>
+
+      {/* History Section */}
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold text-gray-800 mb-3">Lead History</h3>
+        <div className="max-h-[30vh] overflow-y-auto border rounded-md">
+          <table className="min-w-full bg-white">
+            <thead className="sticky top-0 bg-gray-100">
+              <tr>
+                <th className="border px-4 py-2 text-left text-sm text-gray-700">Date</th>
+                <th className="border px-4 py-2 text-left text-sm text-gray-700">Disposition</th>
+                <th className="border px-4 py-2 text-left text-sm text-gray-700">Sub-Disposition</th>
+                <th className="border px-4 py-2 text-left text-sm text-gray-700">Remarks</th>
+                <th className="border px-4 py-2 text-left text-sm text-gray-700">Updated By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedLead.history && selectedLead.history.length > 0 ? (
+                [...selectedLead.history] // Create a shallow copy
+                  .sort((a, b) => b.updatedAt._seconds - a.updatedAt._seconds) // Sort in descending order
+                  .map((entry, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
+                      <td className="border px-4 py-2 text-sm text-gray-600">
+                        {moment.unix(entry.updatedAt._seconds).format("YYYY-MM-DD HH:mm")}
+                      </td>
+                      <td className="border px-4 py-2 text-sm text-gray-600">{entry.disposition}</td>
+                      <td className="border px-4 py-2 text-sm text-gray-600">{entry.subDisposition}</td>
+                      <td className="border px-4 py-2 text-sm text-gray-600">{entry.remarks}</td>
+                      <td className="border px-4 py-2 text-sm text-gray-600">{entry.updatedByName}</td> {/* Fixed to updatedBy */}
+                    </tr>
+                  ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="border px-4 py-2 text-center text-gray-500">No history available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
