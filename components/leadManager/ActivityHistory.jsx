@@ -18,7 +18,6 @@ const ActivityHistory = ({ data }) => {
         ? convertToTimeStamp(item?.followUpDate)
         : null,
       updatedAt: item?.updatedAt ? convertToTimeStamp(item?.updatedAt) : "",
-      salesMemberName: data?.leadData?.salesMemberName || "",
     };
   });
 
@@ -61,7 +60,7 @@ const ActivityHistory = ({ data }) => {
       },
       {
         Header: "Sales Member",
-        accessor: "salesMemberName",
+        accessor: "updatedBy",
       },
     ],
     []
